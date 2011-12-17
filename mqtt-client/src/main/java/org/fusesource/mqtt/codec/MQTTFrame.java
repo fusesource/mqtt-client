@@ -29,7 +29,9 @@ import org.fusesource.mqtt.client.QoS;
 */
 public class MQTTFrame extends CommandSupport.HeaderBase {
 
-    public Buffer[] buffers;
+    private static final Buffer[] NO_BUFFERS = new Buffer[0];
+
+    public Buffer[] buffers = NO_BUFFERS;
 
     public MQTTFrame() {
     }

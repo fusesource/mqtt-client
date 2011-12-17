@@ -63,7 +63,7 @@ public class CallbackApiTest extends TestCase {
 
                     public void failure(Throwable value) {
                         result.failure(value);
-                        connection.close(null);
+                        connection.disconnect(null);
                     }
                 }).resume();
 
@@ -79,7 +79,7 @@ public class CallbackApiTest extends TestCase {
 
                     public void failure(Throwable value) {
                         result.failure(value);
-                        connection.close(null);
+                        connection.disconnect(null);
                     }
                 });
 

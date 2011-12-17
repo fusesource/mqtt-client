@@ -47,5 +47,7 @@ public class BlockingApiTest extends TestCase {
 
         // To let the server know that it has been processed.
         message.ack();
+
+        connection.disconnect();
     }
 }

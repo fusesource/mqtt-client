@@ -118,16 +118,6 @@ public class CallbackConnection {
         this.transport.suspendRead();
     }
 
-    public void close(final Runnable onComplete) {
-        this.transport.stop(new Runnable() {
-            public void run() {
-                if( onComplete!=null ) {
-                    failRequests(new ClosedChannelException());
-                    onComplete.run();
-                }
-            }
-        });
-    }
 
     public CallbackConnection refiller(Runnable refiller) {
         queue.assertExecuting();
@@ -149,6 +139,44 @@ public class CallbackConnection {
     public Throwable failure() {
         queue.assertExecuting();
         return failure;
+    }
+
+    public void disconnect(final CB0 onComplete) {
+        final short requestId = getNextMessageId();
+
+        final Runnable stop = new Runnable() {
+            boolean executed = false;
+            public void run() {
+                if(!executed) {
+                    executed = true;
+                    requests.remove(requestId);
+                    transport.stop(new Runnable() {
+                        public void run() {
+                            if (onComplete != null) {
+                                onComplete.apply();
+                            }
+                        }
+                    });
+                }
+            }
+        };
+        
+        CB0 cb = new CB0() {
+            // gets called once the DISCONNECT is accepted by the transport. 
+            public void apply() {
+                // make sure DISCONNECT has been flushed out to the socket 
+                refiller = stop;
+            }
+            public void failure(Throwable value) {
+                stop.run();
+            }
+        };
+        
+        // Pop the frame into a request so it we get notified
+        // of any failures so we continue to stop the transport.
+        MQTTFrame frame = new DISCONNECT().encode();
+        this.requests.put(requestId, new Request(frame, cb));
+        send(frame, cb);
     }
 
     public void publish(String topic, byte[] payload, QoS qos, boolean retain, CB0 cb) {
@@ -305,6 +333,11 @@ public class CallbackConnection {
                 case UNSUBACK.TYPE: {
                     UNSUBACK ack = new UNSUBACK().decode(frame);
                     completeRequest(ack.messageId(), UNSUBSCRIBE.TYPE, null);
+                    break;
+                }
+                case PINGRESP.TYPE: {
+                    // TODO: implement (but we should not get these as we
+                    // are not sending PINGREQ commands)
                     break;
                 }
                 default:

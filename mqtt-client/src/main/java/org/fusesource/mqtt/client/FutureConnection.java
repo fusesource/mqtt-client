@@ -69,11 +69,11 @@ public class FutureConnection {
         return this.next.getDispatchQueue();
     }
 
-    public Future1<Void> close() {
-        final FutureCB1<Void> future = new FutureCB1<Void>();
-        next.close(new Runnable() {
+    public Future0 disconnect() {
+        final FutureCB0 future = new FutureCB0();
+        next.getDispatchQueue().execute(new Runnable() {
             public void run() {
-                future.apply(null);
+                next.disconnect(future);
             }
         });
         return future;

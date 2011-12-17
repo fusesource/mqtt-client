@@ -20,10 +20,6 @@ package org.fusesource.mqtt.client;
 
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
-import org.fusesource.mqtt.client.FutureConnection;
-import org.fusesource.mqtt.client.Message;
-import org.fusesource.mqtt.client.QoS;
-import org.fusesource.mqtt.client.Topic;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -45,8 +41,8 @@ public class BlockingConnection {
         this.next = next;
     }
 
-    public void close() throws Exception {
-        this.next.close().await();
+    public void disconnect() throws Exception {
+        this.next.disconnect().await();
     }
 
     public byte[] subscribe(final Topic[] topics) throws Exception {
