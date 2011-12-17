@@ -42,11 +42,29 @@ public class Message {
         this.onComplete = onComplete;
     }
 
-    public Buffer getPayload() {
+    public byte[] getPayload() {
+        return payload.toByteArray();
+    }
+
+    /**
+     * Using getPayloadBuffer() is lower overhead version of getPayload()
+     * since it avoids a byte array copy.
+     * @return
+     */
+    public Buffer getPayloadBuffer() {
         return payload;
     }
 
-    public UTF8Buffer getTopic() {
+    public String getTopic() {
+        return topic.toString();
+    }
+
+    /**
+     * Using getTopicBuffer is lower overhead version of getTopic()
+     * since it avoid doing UTF-8 decode.
+     * @return
+     */
+    public UTF8Buffer getTopicBuffer() {
         return topic;
     }
 

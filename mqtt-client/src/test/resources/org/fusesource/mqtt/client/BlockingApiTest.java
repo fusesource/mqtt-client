@@ -1,0 +1,51 @@
+/**
+ * Copyright (C) 2010-2011, FuseSource Corp.  All rights reserved.
+ *
+ *     http://fusesource.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fusesource.mqtt.client;
+
+import junit.framework.TestCase;
+
+
+import static org.fusesource.hawtbuf.Buffer.ascii;
+import static org.fusesource.hawtbuf.Buffer.utf8;
+
+/**
+ * <p>
+ * </p>
+ *
+ * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
+ */
+public class BlockingApiTest extends TestCase {
+
+    public void testCallbackInterface() throws Exception {
+        MQTT mqtt = new MQTT();
+        mqtt.setHost("localhost", 1883 /* broker.port*/);
+        mqtt.setClientId("Hiram");
+
+        BlockingConnection connection = mqtt.connectBlocking();
+        Topic[] topics = {new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)};
+        byte[] qoses = connection.subscribe(topics);
+
+        connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false);
+        Message message = connection.receive();
+        assertEquals("Hello", new String(message.getPayload())) ;
+
+        // To let the server know that it has been processed.
+        message.ack();
+    }
+}

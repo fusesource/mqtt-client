@@ -18,14 +18,29 @@
 
 package org.fusesource.mqtt.client;
 
+import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.hawtdispatch.DispatchQueue;
+import org.fusesource.hawtdispatch.transport.SslTransport;
+import org.fusesource.hawtdispatch.transport.TcpTransport;
+import org.fusesource.hawtdispatch.transport.Transport;
+import org.fusesource.hawtdispatch.transport.TransportListener;
+import org.fusesource.mqtt.codec.CONNACK;
+import org.fusesource.mqtt.codec.CONNECT;
+import org.fusesource.mqtt.codec.MQTTFrame;
+import org.fusesource.mqtt.codec.MQTTProtocolCodec;
+
+import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+
+import static org.fusesource.hawtbuf.Buffer.utf8;
+import static org.fusesource.hawtdispatch.Dispatch.NOOP;
+import static org.fusesource.hawtdispatch.Dispatch.createQueue;
 
 
 /**
@@ -35,8 +50,6 @@ import java.util.concurrent.TimeUnit;
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 public class MQTT {
-
-    private MQTT() {}
 
     private static final long KEEP_ALIVE = Long.parseLong(System.getProperty("mqtt.thread.keep_alive", ""+1000));
     private static final long STACK_SIZE = Long.parseLong(System.getProperty("mqtt.thread.stack_size", ""+1024*512));
@@ -66,36 +79,328 @@ public class MQTT {
         }
         return blockingThreadPool;
     }
+    
+    URI host;
+    URI localURI;
+    SSLContext sslContext;
+    DispatchQueue dispatchQueue;
+    Executor blockingExecutor;
+    int maxReadRate;
+    int maxWriteRate;
+    int trafficClass = TcpTransport.IPTOS_THROUGHPUT;
+    int receiveBufferSize = 1024*64;
+    int sendBufferSize = 1024*64;
+    boolean useLocalHost = true;
+    CONNECT connect = new CONNECT();
 
-    static public org.fusesource.mqtt.client.callback.ConnectionBuilder callback(URI uri) {
-        return new org.fusesource.mqtt.client.callback.ConnectionBuilder(uri);
+    public MQTT() {
     }
-    static public org.fusesource.mqtt.client.callback.ConnectionBuilder callback(String uri) throws URISyntaxException {
-        return callback(new URI(uri));
-    }
-    static public org.fusesource.mqtt.client.callback.ConnectionBuilder callback(String host, int port) throws URISyntaxException {
-        return callback("tcp://"+host+":"+port);
-    }
-
-    static public org.fusesource.mqtt.client.future.ConnectionBuilder future(URI uri) {
-        return new org.fusesource.mqtt.client.future.ConnectionBuilder(callback(uri));
-    }
-    static public org.fusesource.mqtt.client.future.ConnectionBuilder future(String uri) throws URISyntaxException {
-        return future(new URI(uri));
-    }
-    static public org.fusesource.mqtt.client.future.ConnectionBuilder future(String host, int port) throws URISyntaxException {
-        return future("tcp://"+host+":"+port);
+    public MQTT(MQTT other) {
+        this.host = other.host;
+        this.localURI = other.localURI;
+        this.sslContext = other.sslContext;
+        this.dispatchQueue = other.dispatchQueue;
+        this.blockingExecutor = other.blockingExecutor;
+        this.maxReadRate = other.maxReadRate;
+        this.maxWriteRate = other.maxWriteRate;
+        this.trafficClass = other.trafficClass;
+        this.receiveBufferSize = other.receiveBufferSize;
+        this.sendBufferSize = other.sendBufferSize;
+        this.useLocalHost = other.useLocalHost;
+        this.connect = new CONNECT(other.connect);
     }
 
+    public void connectCallback(final CB1<CallbackConnection> cb) {
+        final MQTT builder = new MQTT(this);
+        assert cb !=null : "Callback should not be null.";
+        try {
+            String scheme = builder.host.getScheme();
+            final Transport transport;
+            if( "tcp".equals(scheme) ) {
+                transport = new TcpTransport();
+            }  else if( SslTransport.protocol(scheme)!=null ) {
+                SslTransport ssl = new SslTransport();
+                if( builder.sslContext == null ) {
+                    builder.sslContext = SSLContext.getInstance(SslTransport.protocol(scheme));
+                }
+                ssl.setSSLContext(builder.sslContext);
+                if( builder.blockingExecutor == null ) {
+                    builder.blockingExecutor = getBlockingThreadPool();
+                }
+                ssl.setBlockingExecutor(builder.blockingExecutor);
+                transport = ssl;
+            } else {
+                throw new Exception("Unsupported URI scheme '"+scheme+"'");
+            }
 
-    static public org.fusesource.mqtt.client.blocking.ConnectionBuilder blocking(URI uri) {
-        return new org.fusesource.mqtt.client.blocking.ConnectionBuilder(future(uri));
+            if(builder.dispatchQueue == null) {
+                builder.dispatchQueue = createQueue("stomp client");
+            }
+            transport.setDispatchQueue(builder.dispatchQueue);
+            transport.setProtocolCodec(new MQTTProtocolCodec());
+
+            if( transport instanceof TcpTransport ) {
+                TcpTransport tcp = (TcpTransport)transport;
+                tcp.setMaxReadRate(builder.maxReadRate);
+                tcp.setMaxWriteRate(builder.maxWriteRate);
+                tcp.setReceiveBufferSize(builder.receiveBufferSize);
+                tcp.setSendBufferSize(builder.sendBufferSize);
+                tcp.setTrafficClass(builder.trafficClass);
+                tcp.setUseLocalHost(builder.useLocalHost);
+                tcp.connecting(builder.host, builder.localURI);
+            }
+
+            TransportListener commandListener = new TransportListener() {
+                public void onTransportConnected() {
+                    transport.resumeRead();
+                    boolean accepted = transport.offer(builder.connect.encode());
+                    assert accepted: "First frame should always be accepted by the transport";
+
+                }
+
+                public void onTransportCommand(Object command) {
+                    MQTTFrame response = (MQTTFrame) command;
+                    try {
+                        switch( response.commandType() ) {
+                            case CONNACK.TYPE:
+                                CONNACK connack = new CONNACK().decode(response);
+                                switch(connack.code()) {
+                                    case CONNECTION_ACCEPTED:
+                                        transport.suspendRead();
+                                        cb.apply(new CallbackConnection(transport, builder));
+                                        break;
+                                    default:
+                                        cb.failure(new IOException("Could not connect: " + connack.code()));
+                                }
+                                break;
+                            default:
+                                cb.failure(new IOException("Could not connect. Received unexpected command: " + response.commandType()));
+
+                        }
+                    } catch (ProtocolException e) {
+                        cb.failure(e);
+                    }
+                }
+
+                public void onTransportFailure(final IOException error) {
+                    transport.stop(new Runnable() {
+                        public void run() {
+                            cb.failure(error);
+                        }
+                    });
+                }
+
+                public void onRefill() {
+                }
+
+                public void onTransportDisconnected() {
+                }
+            };
+            transport.setTransportListener(commandListener);
+            transport.start(NOOP);
+
+        } catch (Throwable e) {
+            cb.failure(e);
+        }
     }
-    static public org.fusesource.mqtt.client.blocking.ConnectionBuilder blocking(String uri) throws URISyntaxException {
-        return blocking(new URI(uri));
+
+    public Future1<FutureConnection> connectFuture() {
+        final FutureCB1<FutureConnection> future = new FutureCB1<FutureConnection>();
+        connectCallback(new CB1<CallbackConnection>() {
+            public void failure(Throwable value) {
+                future.failure(value);
+            }
+
+            public void apply(CallbackConnection value) {
+                future.apply(new FutureConnection(value));
+            }
+        });
+        return future;
     }
-    static public org.fusesource.mqtt.client.blocking.ConnectionBuilder blocking(String host, int port) throws URISyntaxException {
-        return blocking("tcp://"+host+":"+port);
+
+    public BlockingConnection connectBlocking() throws Exception {
+        return new BlockingConnection(connectFuture().await());
+    }
+
+    public UTF8Buffer getClientId() {
+        return connect.getClientId();
+    }
+
+    public short getKeepAlive() {
+        return connect.getKeepAlive();
+    }
+
+    public UTF8Buffer getPassword() {
+        return connect.getPassword();
+    }
+
+    public byte getType() {
+        return connect.getType();
+    }
+
+    public UTF8Buffer getUserName() {
+        return connect.getUserName();
+    }
+
+    public UTF8Buffer getWillMessage() {
+        return connect.getWillMessage();
+    }
+
+    public byte getWillQos() {
+        return connect.getWillQos();
+    }
+
+    public UTF8Buffer getWillTopic() {
+        return connect.getWillTopic();
+    }
+
+    public boolean isCleanSession() {
+        return connect.isCleanSession();
+    }
+
+    public boolean isWillRetain() {
+        return connect.isWillRetain();
+    }
+
+    public void setCleanSession(boolean cleanSession) {
+        connect.setCleanSession(cleanSession);
+    }
+
+    public void setClientId(String clientId) {
+        this.setClientId(utf8(clientId));
+    }
+    public void setClientId(UTF8Buffer clientId) {
+        connect.setClientId(clientId);
+    }
+
+    public void setKeepAlive(short keepAlive) {
+        connect.setKeepAlive(keepAlive);
+    }
+
+    public void setPassword(String password) {
+        this.setPassword(utf8(password));
+    }
+    public void setPassword(UTF8Buffer password) {
+        connect.setPassword(password);
+    }
+
+    public void setUserName(String password) {
+        this.setUserName(utf8(password));
+    }
+    public void setUserName(UTF8Buffer userName) {
+        connect.setUserName(userName);
+    }
+
+    public void setWillMessage(UTF8Buffer willMessage) {
+        connect.setWillMessage(willMessage);
+    }
+
+    public void setWillQos(byte willQos) {
+        connect.setWillQos(willQos);
+    }
+
+    public void setWillRetain(boolean willRetain) {
+        connect.setWillRetain(willRetain);
+    }
+
+    public void setWillTopic(String password) {
+        this.setWillTopic(utf8(password));
+    }
+    public void setWillTopic(UTF8Buffer willTopic) {
+        connect.setWillTopic(willTopic);
+    }
+
+    public Executor getBlockingExecutor() {
+        return blockingExecutor;
+    }
+
+    public void setBlockingExecutor(Executor blockingExecutor) {
+        this.blockingExecutor = blockingExecutor;
+    }
+
+    public DispatchQueue getDispatchQueue() {
+        return dispatchQueue;
+    }
+
+    public void setDispatchQueue(DispatchQueue dispatchQueue) {
+        this.dispatchQueue = dispatchQueue;
+    }
+
+    public URI getLocalURI() {
+        return localURI;
+    }
+
+    public void setLocalURI(URI localURI) {
+        this.localURI = localURI;
+    }
+
+    public int getMaxReadRate() {
+        return maxReadRate;
+    }
+
+    public void setMaxReadRate(int maxReadRate) {
+        this.maxReadRate = maxReadRate;
+    }
+
+    public int getMaxWriteRate() {
+        return maxWriteRate;
+    }
+
+    public void setMaxWriteRate(int maxWriteRate) {
+        this.maxWriteRate = maxWriteRate;
+    }
+
+    public int getReceiveBufferSize() {
+        return receiveBufferSize;
+    }
+
+    public void setReceiveBufferSize(int receiveBufferSize) {
+        this.receiveBufferSize = receiveBufferSize;
+    }
+
+    public URI getHost() {
+        return host;
+    }
+    public void setHost(String host, int port) throws URISyntaxException {
+        this.setHost(new URI("tcp://"+host+":"+port));
+    }
+    public void setHost(String host) throws URISyntaxException {
+        this.setHost(new URI("tcp://"+host+":1883"));
+    }
+    public void setHost(URI host) {
+        this.host = host;
+    }
+
+    public int getSendBufferSize() {
+        return sendBufferSize;
+    }
+
+    public void setSendBufferSize(int sendBufferSize) {
+        this.sendBufferSize = sendBufferSize;
+    }
+
+    public SSLContext getSslContext() {
+        return sslContext;
+    }
+
+    public void setSslContext(SSLContext sslContext) {
+        this.sslContext = sslContext;
+    }
+
+    public int getTrafficClass() {
+        return trafficClass;
+    }
+
+    public void setTrafficClass(int trafficClass) {
+        this.trafficClass = trafficClass;
+    }
+
+    public boolean isUseLocalHost() {
+        return useLocalHost;
+    }
+
+    public void setUseLocalHost(boolean useLocalHost) {
+        this.useLocalHost = useLocalHost;
     }
 
 }
