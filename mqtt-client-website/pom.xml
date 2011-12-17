@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2010-2011, FuseSource Corp.  All rights reserved.
+
+        http://fusesource.com
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.fusesource.mqtt-client</groupId>
+    <artifactId>mqtt-client-project</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+  
+  <groupId>org.fusesource.mqtt-client</groupId>
+  <artifactId>mqtt-client-website</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>war</packaging>
+
+  <name>${project.artifactId}</name>
+  <description>The Stomp Website</description>
+
+  <properties>
+    <website-root>versions/${project.version}/website</website-root>
+    <scala-version>2.9.1</scala-version>
+    <scala-plugin-version>2.14</scala-plugin-version>
+    <scalate-version>1.5.3</scalate-version>
+    <scalamd-version>1.5</scalamd-version>
+    <slf4j-version>1.6.0</slf4j-version>
+  </properties>
+
+  <dependencies>
+    
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-compiler</artifactId>
+      <version>${scala-version}</version>
+    </dependency>
+        
+    <dependency>
+      <groupId>org.fusesource.scalate</groupId>
+      <artifactId>scalate-wikitext</artifactId>
+      <version>${scalate-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.scalate</groupId>
+      <artifactId>scalate-page</artifactId>
+      <version>${scalate-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.scalamd</groupId>
+      <artifactId>scalamd</artifactId>
+      <version>${scalamd-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>${slf4j-version}</version>
+    </dependency>    
+  </dependencies>
+
+  <build>
+    <sourceDirectory>ext</sourceDirectory>
+    
+    <plugins>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <version>${scala-plugin-version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <jvmArgs>
+            <jvmArg>-Xmx1024m</jvmArg>
+          </jvmArgs>
+          <scalaVersion>${scala-version}</scalaVersion>
+        </configuration>
+      </plugin>    
+
+      <plugin>
+        <groupId>org.fusesource.scalate</groupId>
+        <artifactId>maven-scalate-plugin</artifactId>
+        <version>${scalate-version}</version>
+        
+        <executions>
+          <execution>
+            <id>sitegen</id>
+            <goals>
+              <goal>sitegen</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+          <execution>
+            <id>deploy</id>
+            <goals>
+              <goal>deploy</goal>
+            </goals>
+            <phase>deploy</phase>
+          </execution> 
+                    
+        </executions>
+        <configuration>
+          <warSourceDirectory>${basedir}/src</warSourceDirectory>
+          <remoteServerId>website.fusesource.org</remoteServerId>
+          <remoteServerUrl>dav:http://fusesource.com/forge/dav/${forge-project-id}/${website-root}</remoteServerUrl>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.fusesource.scalamd</groupId>
+            <artifactId>scalamd</artifactId>
+            <version>${scalamd-version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>2.0.2</version>
+        <configuration>
+          <warSourceDirectory>${basedir}/src</warSourceDirectory>
+        </configuration>
+      </plugin>      
+
+      <plugin>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty-maven-plugin</artifactId>
+        <version>7.0.1.v20091125</version>
+          <configuration>
+            <webAppSourceDirectory>${basedir}/src</webAppSourceDirectory>
+            <systemProperties>
+              <systemProperty>
+                <name>scalate.editor</name>
+                <value>${env.SCALATE_EDITOR}</value>
+              </systemProperty>
+              <systemProperty>
+                <name>scalate.workdir</name>
+                <value>${basedir}/target/_scalate</value>
+              </systemProperty>
+              <systemProperty>
+                <name>scalate.mode</name>
+                <value>development</value>
+              </systemProperty>
+            </systemProperties>
+            <scanIntervalSeconds>0</scanIntervalSeconds>
+          </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.fusesource.mvnplugins</groupId>
+        <artifactId>maven-linkchecker-plugin</artifactId>
+        <version>1.12</version>
+        <configuration>
+          <excludedLinks>
+            <value>http://github.com/</value>
+            <value>http://git.or.cz/</value>
+            <value>http://localhost:8080/</value>
+            <value>http://repo.fusesource.com/</value>
+            <value>http://search.twitter.com/</value>
+            <value>http://www.chengin.com/</value>
+          </excludedLinks>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
+    
+</project>
+
