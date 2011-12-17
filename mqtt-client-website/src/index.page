@@ -52,6 +52,9 @@ methods:
     // process the message then:
     message.ack();
 
+Finally to disconnect:
+
+    connection.disconnect();
 
 ## Using the Future based API
 
@@ -74,34 +77,27 @@ return the result via a Future.
     // Then the receive will get the message.
     Message message = receive.await();
     message.ack();
+    
+    Future0 f4 connection.disconnect();
+    f4.await()l
+
 
 ## Using the Callback/Continuation Passing based API
 
-The `MQTT.connectCallback` method establishes a connection and provides you a connection
-with an callback style API.  This is the most complex to use API style, but can provide
-the best performance.  The future and blocking APIs use the callback api under the covers.
-
-Every connection has a [HawtDispatch][http://hawtdispatch.fusesource.org/] 
-dispatch queue which it uses to process IO events for the socket.  The dispatch queue
-is an Executor that provides serial execution of IO and processing events and is used 
-to ensure synchronized access of connection.
-
-All operations on the connection are non-blocking and results of an operation
-are passed to callback interfaces you implement.   The callback will be executing the the 
-the dispatch queue associated with the connection so it safe to use the connection
-from the callback but you MUST NOT perform any blocking operations within the callback.  
-If you need to perform some processing which MAY block, you must send it to another thread 
-pool for processing.  Furthermore, if another thread needs to interact with the connection
-it can only doit by using a Runnable submitted to the connection's dispatch queue.
+The `MQTT.connectCallback` method establishes a connection and provides you a connection with
+an callback style API. This is the most complex to use API style, but can provide the best
+performance. The future and blocking APIs use the callback api under the covers. All
+operations on the connection are non-blocking and results of an operation are passed to
+callback interfaces you implement.
 
 Example:
 
     mqtt.connectCallback(new CB1<CallbackConnection>() {
-      
+  
         public void failure(Throwable value) {
             result.failure(value); // If we could not connect to the server.
         }
-      
+  
         // Once we connect..
         public void apply(final CallbackConnection connection) {
 
@@ -117,7 +113,7 @@ Example:
                     connection.close(null); // a connection failure occured.
                 }
             })
-            
+        
             // A connection starts suspended, so you can set a listener.
             // resume the connection to start processing IO events from the server.
             connection.resume();
@@ -142,9 +138,38 @@ Example:
                     connection.close(null); // publish failed.
                 }
             });
+            
+            // To disconnect..
+            connection.disconnect(new CB0() {
+                public void apply() {
+                  // called once the connection is disconnected.
+                }
+                public void failure(Throwable value) {
+                  // Disconnects never fail.
+                }
+            });
         }
     });
 
+Every connection has a [HawtDispatch][http://hawtdispatch.fusesource.org/] dispatch queue
+which it uses to process IO events for the socket. The dispatch queue is an Executor that
+provides serial execution of IO and processing events and is used to ensure synchronized
+access of connection.
+
+The callbacks will be executing the the the dispatch queue associated with the connection so
+it safe to use the connection from the callback but you MUST NOT perform any blocking
+operations within the callback. If you need to perform some processing which MAY block, you
+must send it to another thread pool for processing. Furthermore, if another thread needs to
+interact with the connection it can only doit by using a Runnable submitted to the
+connection's dispatch queue.
+
+Example of executing a Runnable on the connection's dispatch queue:
+
+    connection.getDispatchQueue().execute(new Runnable(){
+        public void run() {
+          connection.publish( ..... );
+        }
+    });
 
 ## Reference
 

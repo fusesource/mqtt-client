@@ -39,6 +39,9 @@ methods:
     // process the message then:
     message.ack();
 
+Finally to disconnect:
+
+    connection.disconnect();
 
 ## Using the Future based API
 
@@ -61,6 +64,10 @@ return the result via a Future.
     // Then the receive will get the message.
     Message message = receive.await();
     message.ack();
+    
+    Future0 f4 connection.disconnect();
+    f4.await()l
+
 
 ## Using the Callback/Continuation Passing based API
 
@@ -116,6 +123,16 @@ Example:
                 }
                 public void failure(Throwable value) {
                     connection.close(null); // publish failed.
+                }
+            });
+            
+            // To disconnect..
+            connection.disconnect(new CB0() {
+                public void apply() {
+                  // called once the connection is disconnected.
+                }
+                public void failure(Throwable value) {
+                  // Disconnects never fail.
                 }
             });
         }
