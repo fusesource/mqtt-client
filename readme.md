@@ -64,22 +64,11 @@ return the result via a Future.
 
 ## Using the Callback/Continuation Passing based API
 
-The `MQTT.connectCallback` method establishes a connection and provides you a connection
-with an callback style API.  This is the most complex to use API style, but can provide
-the best performance.  The future and blocking APIs use the callback api under the covers.
-
-Every connection has a [HawtDispatch][http://hawtdispatch.fusesource.org/] 
-dispatch queue which it uses to process IO events for the socket.  The dispatch queue
-is an Executor that provides serial execution of IO and processing events and is used 
-to ensure synchronized access of connection.
-
-All operations on the connection are non-blocking and results of an operation
-are passed to callback interfaces you implement.   The callback will be executing the the 
-the dispatch queue associated with the connection so it safe to use the connection
-from the callback but you MUST NOT perform any blocking operations within the callback.  
-If you need to perform some processing which MAY block, you must send it to another thread 
-pool for processing.  Furthermore, if another thread needs to interact with the connection
-it can only doit by using a Runnable submitted to the connection's dispatch queue.
+The `MQTT.connectCallback` method establishes a connection and provides you a connection with
+an callback style API. This is the most complex to use API style, but can provide the best
+performance. The future and blocking APIs use the callback api under the covers. All
+operations on the connection are non-blocking and results of an operation are passed to
+callback interfaces you implement.
 
 Example:
 
@@ -132,6 +121,22 @@ Example:
         }
     });
 
+Every connection has a [HawtDispatch][http://hawtdispatch.fusesource.org/] dispatch queue
+which it uses to process IO events for the socket. The dispatch queue is an Executor that
+provides serial execution of IO and processing events and is used to ensure synchronized
+access of connection.
 
+The callbacks will be executing the the the dispatch queue associated with the connection so
+it safe to use the connection from the callback but you MUST NOT perform any blocking
+operations within the callback. If you need to perform some processing which MAY block, you
+must send it to another thread pool for processing. Furthermore, if another thread needs to
+interact with the connection it can only doit by using a Runnable submitted to the
+connection's dispatch queue.
 
+Example of executing a Runnable on the connection's dispatch queue:
 
+    connection.getDispatchQueue().execute(new Runnable(){
+        public void run() {
+          connection.publish( ..... );
+        }
+    });
