@@ -21,19 +21,19 @@ package org.fusesource.mqtt.client;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.hawtdispatch.DispatchQueue;
-import org.fusesource.mqtt.codec.MQTTFrame;
-import org.fusesource.mqtt.codec.*;
-import org.fusesource.mqtt.codec.CommandSupport.*;
+import org.fusesource.hawtdispatch.transport.HeartBeatMonitor;
 import org.fusesource.hawtdispatch.transport.Transport;
 import org.fusesource.hawtdispatch.transport.TransportListener;
+import org.fusesource.mqtt.codec.CommandSupport.Acked;
+import org.fusesource.mqtt.codec.*;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 
 import static org.fusesource.hawtbuf.Buffer.utf8;
 
@@ -57,11 +57,6 @@ public class CallbackConnection {
         }
     }
 
-    private final DispatchQueue queue;
-    private final MQTT mqtt;
-
-    private Transport transport;
-
     private static final Listener DEFAULT_LISTENER = new Listener(){
         public void apply(UTF8Buffer utf8Buffer, Buffer buffer, Runnable runnable) {
             this.failure(createListenerNotSetError());
@@ -71,20 +66,23 @@ public class CallbackConnection {
         }
     };
 
+    private final DispatchQueue queue;
+    private final MQTT mqtt;
+    private Transport transport;
     private Listener listener = DEFAULT_LISTENER;
-
     private Runnable refiller;
-
     private HashMap<Short, Request> requests = new HashMap<Short, Request>();
     private LinkedList<Request> overflow = new LinkedList<Request>();
     private HashSet<Short> processed = new HashSet<Short>();
-
     private Throwable failure;
-
-    public CallbackConnection(Transport transport, MQTT builder) {
-        this.queue = transport.getDispatchQueue();
-        this.transport = transport;
-        this.mqtt = builder;
+    private boolean connected = true;
+    private HeartBeatMonitor heartBeatMonitor = new HeartBeatMonitor();
+    private long pingedAt;
+    
+    public CallbackConnection(Transport transportValue, MQTT mqttValue) {
+        this.queue = transportValue.getDispatchQueue();
+        this.transport = transportValue;
+        this.mqtt = mqttValue;
         this.transport.setTransportListener(new TransportListener() {
             public void onTransportCommand(Object command) {
                 processFrame((MQTTFrame) command);
@@ -100,6 +98,29 @@ public class CallbackConnection {
             public void onTransportDisconnected() {
             }
         });
+
+        if(mqttValue.getKeepAlive()>0) {
+            heartBeatMonitor.setWriteInterval((mqttValue.getKeepAlive()*1000)/2);
+            heartBeatMonitor.setTransport(transportValue);
+            heartBeatMonitor.suspendRead(); // to match the suspended state of the transport.
+            heartBeatMonitor.setOnKeepAlive(new Runnable() {
+                public void run() {
+                    // Don't care if the offer is rejected, just means we have data outbound.
+                    if(connected && pingedAt==0 && transport.offer(new PINGREQ().encode())) {
+                        final long now = System.currentTimeMillis();
+                        pingedAt = now;
+                        queue.executeAfter(mqtt.getKeepAlive(), TimeUnit.SECONDS, new Runnable() {
+                            public void run() {
+                                if( now == pingedAt ) {
+                                    processFailure(new ProtocolException("Ping timeout").fillInStackTrace());
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+            heartBeatMonitor.start();
+        }
     }
 
 
@@ -113,9 +134,11 @@ public class CallbackConnection {
 
     public void resume() {
         this.transport.resumeRead();
+        this.heartBeatMonitor.resumeRead();
     }
     public void suspend() {
         this.transport.suspendRead();
+        this.heartBeatMonitor.suspendRead();
     }
 
 
@@ -142,8 +165,8 @@ public class CallbackConnection {
     }
 
     public void disconnect(final CB0 onComplete) {
+        connected = false;
         final short requestId = getNextMessageId();
-
         final Runnable stop = new Runnable() {
             boolean executed = false;
             public void run() {
@@ -336,8 +359,7 @@ public class CallbackConnection {
                     break;
                 }
                 case PINGRESP.TYPE: {
-                    // TODO: implement (but we should not get these as we
-                    // are not sending PINGREQ commands)
+                    pingedAt = 0;
                     break;
                 }
                 default:
