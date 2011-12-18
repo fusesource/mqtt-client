@@ -31,7 +31,7 @@
   <groupId>org.fusesource.mqtt-client</groupId>
   <artifactId>mqtt-client</artifactId>
   <version>1.0-SNAPSHOT</version>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   
   <name>${project.artifactId}</name>
   <description>

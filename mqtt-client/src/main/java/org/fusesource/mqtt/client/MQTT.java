@@ -79,7 +79,10 @@ public class MQTT {
         }
         return blockingThreadPool;
     }
-    
+    public synchronized static void setBlockingThreadPool(ThreadPoolExecutor pool) {
+        blockingThreadPool = pool;
+    }
+
     URI host;
     URI localURI;
     SSLContext sslContext;
