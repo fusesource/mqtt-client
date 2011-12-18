@@ -25,7 +25,7 @@ package org.fusesource.mqtt.client;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public interface Callback<A1> {
-    public void apply(A1 value);
-    public void failure(Throwable value);
+public interface Callback<T> {
+    public void onSuccess(T value);
+    public void onFailure(Throwable value);
 }

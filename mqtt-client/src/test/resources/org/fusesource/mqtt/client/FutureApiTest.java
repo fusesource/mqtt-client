@@ -33,7 +33,7 @@ import static org.fusesource.hawtbuf.Buffer.utf8;
 public class FutureApiTest extends TestCase {
 
     public void testCallbackInterface() throws Exception {
-        final FutureCallback<Buffer> result = new FutureCallback<Buffer>();
+        final Promise<Buffer> result = new Promise<Buffer>();
 
         MQTT mqtt = new MQTT();
         mqtt.setHost("localhost", 1883 /* broker.port*/);

@@ -81,22 +81,22 @@ Example:
 
     mqtt.connectCallback(new Callback<CallbackConnection>() {
   
-        public void failure(Throwable value) {
+        public void onFailure(Throwable value) {
             result.failure(value); // If we could not connect to the server.
         }
   
         // Once we connect..
-        public void apply(final CallbackConnection connection) {
+        public void onSuccess(final CallbackConnection connection) {
 
             // Add a listener to process subscirption messages, and start the
             // resume the connection so it starts receiving messages from the socket.
             connection.listener(new Listener() {
-                public void apply(UTF8Buffer topic, Buffer payload, Runnable ack) {
+                public void onSuccess(UTF8Buffer topic, Buffer payload, Runnable ack) {
                     // You can now process a received message from a topic.
                     // Once process execute the ack runnable.
                     ack.run();
                 }
-                public void failure(Throwable value) {
+                public void onFailure(Throwable value) {
                     connection.close(null); // a connection failure occured.
                 }
             })
@@ -108,30 +108,30 @@ Example:
             // Subscribe to a topic
             Topic[] topics = {new Topic("foo", QoS.AT_LEAST_ONCE)};
             connection.subscribe(topics, new Callback<byte[]>() {
-                public void apply(byte[] qoses) {
+                public void onSuccess(byte[] qoses) {
                     // The result of the subcribe request.
                 }
-                public void failure(Throwable value) {
+                public void onFailure(Throwable value) {
                     connection.close(null); // subscribe failed.
                 }
             });
 
             // Send a message to a topic
             connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false, new Callback<Void>() {
-                public void apply(Void v) {
+                public void onSuccess(Void v) {
                   // the pubish operation completed successfully.
                 }
-                public void failure(Throwable value) {
+                public void onFailure(Throwable value) {
                     connection.close(null); // publish failed.
                 }
             });
             
             // To disconnect..
             connection.disconnect(new Callback<Void>() {
-                public void apply(Void v) {
+                public void onSuccess(Void v) {
                   // called once the connection is disconnected.
                 }
-                public void failure(Throwable value) {
+                public void onFailure(Throwable value) {
                   // Disconnects never fail.
                 }
             });

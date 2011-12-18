@@ -45,24 +45,24 @@ public class CallbackApiTest extends TestCase {
 //    }
 
     public void testCallbackInterface() throws Exception {
-        final FutureCallback<Buffer> result = new FutureCallback<Buffer>();
+        final Promise<Buffer> result = new Promise<Buffer>();
         MQTT mqtt = new MQTT();
         mqtt.setHost("localhost", 1883 /* broker.port*/);
         mqtt.setClientId("Hiram");
         mqtt.connectCallback(new Callback<CallbackConnection>() {
             // Once we connect..
-            public void apply(final CallbackConnection connection) {
+            public void onSuccess(final CallbackConnection connection) {
 
                 // Start add a listener to process subscirption messages, and start the
                 // resume the connection so it starts receiving messages from the socket.
                 connection.listener(new Listener() {
                     public void apply(UTF8Buffer topic, Buffer payload, Runnable onComplete) {
-                        result.apply(payload);
+                        result.onSuccess(payload);
                         onComplete.run();
                     }
 
                     public void failure(Throwable value) {
-                        result.failure(value);
+                        result.onFailure(value);
                         connection.disconnect(null);
                     }
                 }).resume();
@@ -70,23 +70,23 @@ public class CallbackApiTest extends TestCase {
                 // Subscribe to a topic foo
                 Topic[] topics = {new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)};
                 connection.subscribe(topics, new Callback<byte[]>() {
-                    public void apply(byte[] value) {
+                    public void onSuccess(byte[] value) {
 
                         // Once subscribed, publish a message on the same topic.
                         connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false, null);
 
                     }
 
-                    public void failure(Throwable value) {
-                        result.failure(value);
+                    public void onFailure(Throwable value) {
+                        result.onFailure(value);
                         connection.disconnect(null);
                     }
                 });
 
             }
 
-            public void failure(Throwable value) {
-                result.failure(value);
+            public void onFailure(Throwable value) {
+                result.onFailure(value);
             }
         });
 

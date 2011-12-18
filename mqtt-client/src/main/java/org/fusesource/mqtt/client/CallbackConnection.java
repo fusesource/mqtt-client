@@ -176,7 +176,7 @@ public class CallbackConnection {
                     transport.stop(new Runnable() {
                         public void run() {
                             if (onComplete != null) {
-                                onComplete.apply(Void.INSTANCE);
+                                onComplete.onSuccess(null);
                             }
                         }
                     });
@@ -186,11 +186,11 @@ public class CallbackConnection {
         
         Callback<Void> cb = new Callback<Void>() {
             // gets called once the DISCONNECT is accepted by the transport. 
-            public void apply(Void v) {
+            public void onSuccess(Void v) {
                 // make sure DISCONNECT has been flushed out to the socket 
                 refiller = stop;
             }
-            public void failure(Throwable value) {
+            public void onFailure(Throwable value) {
                 stop.run();
             }
         };
@@ -216,7 +216,7 @@ public class CallbackConnection {
     public void subscribe(Topic[] topics, Callback<byte[]> cb) {
         queue.assertExecuting();
         if( listener == DEFAULT_LISTENER ) {
-            cb.failure(createListenerNotSetError());
+            cb.onFailure(createListenerNotSetError());
         } else {
             send(new SUBSCRIBE().topics(topics), cb);
         }
@@ -230,7 +230,7 @@ public class CallbackConnection {
     private void send(Acked command, Callback cb) {
         if( failure !=null ) {
             if( cb!=null ) {
-                cb.failure(failure);
+                cb.onFailure(failure);
             }
         } else {
             MQTTFrame frame = null;
@@ -255,7 +255,7 @@ public class CallbackConnection {
     private void send(MQTTFrame frame, Callback cb) {
         if( overflow.isEmpty() && this.transport.offer(frame) ) {
             if( cb!=null ) {
-                ((Callback<Void>)cb).apply(Void.INSTANCE);
+                ((Callback<Void>)cb).onSuccess(null);
             }
         } else {
             overflow.addLast(new Request(frame, cb));
@@ -282,7 +282,7 @@ public class CallbackConnection {
             if( this.transport.offer(entry.frame) ) {
                 overflow.removeFirst();
                 if( entry.cb!=null ) {
-                    ((Callback<Void>)entry.cb).apply(Void.INSTANCE);
+                    ((Callback<Void>)entry.cb).onSuccess(null);
                 }
             } else {
                 break;
@@ -306,9 +306,9 @@ public class CallbackConnection {
             assert originalType==request.frame.commandType();
             if(request.cb!=null) {
                 if( arg==null ) {
-                    ((Callback<Void>)request.cb).apply(Void.INSTANCE);
+                    ((Callback<Void>)request.cb).onSuccess(null);
                 } else {
-                    ((Callback<Object>)request.cb).apply(arg);
+                    ((Callback<Object>)request.cb).onSuccess(arg);
                 }
             }
         } else {
@@ -432,7 +432,7 @@ public class CallbackConnection {
         requests.clear();
         for (Request value : values) {
             if( value.cb!= null ) {
-                value.cb.failure(failure);
+                value.cb.onFailure(failure);
             }
         }
 
@@ -440,7 +440,7 @@ public class CallbackConnection {
         overflow.clear();
         for (Request entry : overflowEntries) {
             if( entry.cb !=null ) {
-                entry.cb.failure(failure);
+                entry.cb.onFailure(failure);
             }
         }
     }

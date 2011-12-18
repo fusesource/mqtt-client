@@ -28,19 +28,19 @@ import java.util.concurrent.TimeoutException;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class FutureCallback<T> implements Callback<T>, Future<T> {
+public class Promise<T> implements Callback<T>, Future<T> {
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
     Throwable error;
     T value;
 
-    public void failure(Throwable value) {
+    public void onFailure(Throwable value) {
         error = value;
         latch.countDown();
     }
 
-    public void apply(T value) {
+    public void onSuccess(T value) {
         this.value = value;
         latch.countDown();
     }

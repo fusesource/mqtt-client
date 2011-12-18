@@ -170,25 +170,25 @@ public class MQTT {
                                 switch(connack.code()) {
                                     case CONNECTION_ACCEPTED:
                                         transport.suspendRead();
-                                        cb.apply(new CallbackConnection(transport, builder));
+                                        cb.onSuccess(new CallbackConnection(transport, builder));
                                         break;
                                     default:
-                                        cb.failure(new IOException("Could not connect: " + connack.code()));
+                                        cb.onFailure(new IOException("Could not connect: " + connack.code()));
                                 }
                                 break;
                             default:
-                                cb.failure(new IOException("Could not connect. Received unexpected command: " + response.commandType()));
+                                cb.onFailure(new IOException("Could not connect. Received unexpected command: " + response.commandType()));
 
                         }
                     } catch (ProtocolException e) {
-                        cb.failure(e);
+                        cb.onFailure(e);
                     }
                 }
 
                 public void onTransportFailure(final IOException error) {
                     transport.stop(new Runnable() {
                         public void run() {
-                            cb.failure(error);
+                            cb.onFailure(error);
                         }
                     });
                 }
@@ -203,19 +203,19 @@ public class MQTT {
             transport.start(NOOP);
 
         } catch (Throwable e) {
-            cb.failure(e);
+            cb.onFailure(e);
         }
     }
 
     public Future<FutureConnection> connectFuture() {
-        final FutureCallback<FutureConnection> future = new FutureCallback<FutureConnection>();
+        final Promise<FutureConnection> future = new Promise<FutureConnection>();
         connectCallback(new Callback<CallbackConnection>() {
-            public void failure(Throwable value) {
-                future.failure(value);
+            public void onFailure(Throwable value) {
+                future.onFailure(value);
             }
 
-            public void apply(CallbackConnection value) {
-                future.apply(new FutureConnection(value));
+            public void onSuccess(CallbackConnection value) {
+                future.onSuccess(new FutureConnection(value));
             }
         });
         return future;

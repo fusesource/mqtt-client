@@ -38,7 +38,7 @@ public class FutureConnection {
 
     private final CallbackConnection next;
 
-    private LinkedList<FutureCallback<Message>> receiveFutures = new LinkedList<FutureCallback<Message>>();
+    private LinkedList<Promise<Message>> receiveFutures = new LinkedList<Promise<Message>>();
     private LinkedList<Message> receivedFrames = new LinkedList<Message>();
 
     public FutureConnection(CallbackConnection next) {
@@ -50,15 +50,15 @@ public class FutureConnection {
                 if( receiveFutures.isEmpty() ) {
                     receivedFrames.add(msg);
                 } else {
-                    receiveFutures.removeFirst().apply(msg);
+                    receiveFutures.removeFirst().onSuccess(msg);
                 }
             }
             public void failure(Throwable value) {
                 getDispatchQueue().assertExecuting();
-                ArrayList<FutureCallback<?>> tmp = new ArrayList<FutureCallback<?>>(receiveFutures);
+                ArrayList<Promise<?>> tmp = new ArrayList<Promise<?>>(receiveFutures);
                 receiveFutures.clear();
-                for (FutureCallback<?> future : tmp) {
-                    future.failure(value);
+                for (Promise<?> future : tmp) {
+                    future.onFailure(value);
                 }
             }
         });
@@ -70,7 +70,7 @@ public class FutureConnection {
     }
 
     public Future<Void> disconnect() {
-        final FutureCallback<Void> future = new FutureCallback<Void>();
+        final Promise<Void> future = new Promise<Void>();
         next.getDispatchQueue().execute(new Runnable() {
             public void run() {
                 next.disconnect(future);
@@ -80,7 +80,7 @@ public class FutureConnection {
     }
 
     public Future<byte[]> subscribe(final Topic[] topics) {
-        final FutureCallback<byte[]> future = new FutureCallback<byte[]>();
+        final Promise<byte[]> future = new Promise<byte[]>();
         next.getDispatchQueue().execute(new Runnable() {
             public void run() {
                 next.subscribe(topics, future);
@@ -94,7 +94,7 @@ public class FutureConnection {
     }
 
     public Future<Void> publish(final UTF8Buffer topic, final Buffer payload,  final QoS qos, final boolean retain) {
-        final FutureCallback<Void> future = new FutureCallback<Void>();
+        final Promise<Void> future = new Promise<Void>();
         next.getDispatchQueue().execute(new Runnable() {
             public void run() {
                 next.publish(topic, payload, qos, retain, future);
@@ -104,16 +104,16 @@ public class FutureConnection {
     }
 
     public Future<Message> receive() {
-        final FutureCallback<Message> future = new FutureCallback<Message>();
+        final Promise<Message> future = new Promise<Message>();
         getDispatchQueue().execute(new Runnable(){
             public void run() {
                 if( next.failure()!=null ) {
-                    future.failure(next.failure());
+                    future.onFailure(next.failure());
                 } else {
                     if( receivedFrames.isEmpty() ) {
                         receiveFutures.add(future);
                     } else {
-                        future.apply(receivedFrames.removeFirst());
+                        future.onSuccess(receivedFrames.removeFirst());
                     }
                 }
             }
