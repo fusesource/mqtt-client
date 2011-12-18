@@ -27,6 +27,7 @@ import org.fusesource.hawtbuf.UTF8Buffer;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public interface Listener extends CB {
+public interface Listener {
     public void apply(UTF8Buffer utf8Buffer, Buffer buffer, Runnable runnable);
+    public void failure(Throwable value);
 }

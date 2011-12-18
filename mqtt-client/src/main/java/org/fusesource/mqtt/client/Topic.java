@@ -21,11 +21,11 @@ package org.fusesource.mqtt.client;
 import org.fusesource.hawtbuf.UTF8Buffer;
 
 /**
-* <p>
-* </p>
-*
-* @author <a href="http://hiramchirino.com">Hiram Chirino</a>
-*/
+ * <p>
+ * </p>
+ *
+ * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
+ */
 public class Topic {
 
     private final UTF8Buffer name;

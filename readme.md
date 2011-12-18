@@ -79,7 +79,7 @@ callback interfaces you implement.
 
 Example:
 
-    mqtt.connectCallback(new CB1<CallbackConnection>() {
+    mqtt.connectCallback(new Callback<CallbackConnection>() {
   
         public void failure(Throwable value) {
             result.failure(value); // If we could not connect to the server.
@@ -107,7 +107,7 @@ Example:
 
             // Subscribe to a topic
             Topic[] topics = {new Topic("foo", QoS.AT_LEAST_ONCE)};
-            connection.subscribe(topics, new CB1<byte[]>() {
+            connection.subscribe(topics, new Callback<byte[]>() {
                 public void apply(byte[] qoses) {
                     // The result of the subcribe request.
                 }
@@ -117,8 +117,8 @@ Example:
             });
 
             // Send a message to a topic
-            connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false, new CB0() {
-                public void apply() {
+            connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false, new Callback<Void>() {
+                public void apply(Void v) {
                   // the pubish operation completed successfully.
                 }
                 public void failure(Throwable value) {
@@ -127,8 +127,8 @@ Example:
             });
             
             // To disconnect..
-            connection.disconnect(new CB0() {
-                public void apply() {
+            connection.disconnect(new Callback<Void>() {
+                public void apply(Void v) {
                   // called once the connection is disconnected.
                 }
                 public void failure(Throwable value) {

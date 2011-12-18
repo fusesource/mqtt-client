@@ -33,20 +33,20 @@ import static org.fusesource.hawtbuf.Buffer.utf8;
 public class FutureApiTest extends TestCase {
 
     public void testCallbackInterface() throws Exception {
-        final FutureCB1<Buffer> result = new FutureCB1<Buffer>();
+        final FutureCallback<Buffer> result = new FutureCallback<Buffer>();
 
         MQTT mqtt = new MQTT();
         mqtt.setHost("localhost", 1883 /* broker.port*/);
         mqtt.setClientId("Hiram");
 
-        Future1<FutureConnection> f1 = mqtt.connectFuture();
+        Future<FutureConnection> f1 = mqtt.connectFuture();
         FutureConnection connection = f1.await();
 
-        Future1<byte[]> f2 = connection.subscribe(new Topic[]{new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)});
+        Future<byte[]> f2 = connection.subscribe(new Topic[]{new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)});
         byte[] qoses = f2.await();
 
         // We can start future receive..
-        Future1<Message> receive = connection.receive();
+        Future<Message> receive = connection.receive();
 
         // send the message..
         connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false);

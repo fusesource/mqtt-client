@@ -28,7 +28,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class FutureCB1<T> implements CB1<T>, Future1<T> {
+public class FutureCallback<T> implements Callback<T>, Future<T> {
 
     private final CountDownLatch latch = new CountDownLatch(1);
 

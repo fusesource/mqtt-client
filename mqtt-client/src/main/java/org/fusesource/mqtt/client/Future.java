@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public interface Future1<T> {
+public interface Future<T> {
     T await() throws Exception;
     T await(long amount, TimeUnit unit) throws Exception;
 }

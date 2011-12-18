@@ -20,11 +20,12 @@ package org.fusesource.mqtt.client;
 
 /**
  * <p>
- * Function Result the carries no data.
+ * Function Result that carries one value.
  * </p>
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public interface CB0 extends CB {
-    public void apply();
+public interface Callback<A1> {
+    public void apply(A1 value);
+    public void failure(Throwable value);
 }

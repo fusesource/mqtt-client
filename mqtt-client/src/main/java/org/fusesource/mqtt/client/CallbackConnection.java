@@ -49,9 +49,9 @@ public class CallbackConnection {
 
     private static class Request {
         final MQTTFrame frame;
-        final CB cb;
+        final Callback cb;
 
-        Request(MQTTFrame frame, CB cb) {
+        Request(MQTTFrame frame, Callback cb) {
             this.cb = cb;
             this.frame = frame;
         }
@@ -164,7 +164,7 @@ public class CallbackConnection {
         return failure;
     }
 
-    public void disconnect(final CB0 onComplete) {
+    public void disconnect(final Callback<Void> onComplete) {
         connected = false;
         final short requestId = getNextMessageId();
         final Runnable stop = new Runnable() {
@@ -176,7 +176,7 @@ public class CallbackConnection {
                     transport.stop(new Runnable() {
                         public void run() {
                             if (onComplete != null) {
-                                onComplete.apply();
+                                onComplete.apply(Void.INSTANCE);
                             }
                         }
                     });
@@ -184,9 +184,9 @@ public class CallbackConnection {
             }
         };
         
-        CB0 cb = new CB0() {
+        Callback<Void> cb = new Callback<Void>() {
             // gets called once the DISCONNECT is accepted by the transport. 
-            public void apply() {
+            public void apply(Void v) {
                 // make sure DISCONNECT has been flushed out to the socket 
                 refiller = stop;
             }
@@ -202,18 +202,18 @@ public class CallbackConnection {
         send(frame, cb);
     }
 
-    public void publish(String topic, byte[] payload, QoS qos, boolean retain, CB0 cb) {
+    public void publish(String topic, byte[] payload, QoS qos, boolean retain, Callback<Void> cb) {
         publish(utf8(topic), new Buffer(payload), qos, retain, cb);
     }
 
-    public void publish(UTF8Buffer topic, Buffer payload, QoS qos, boolean retain, CB0 cb) {
+    public void publish(UTF8Buffer topic, Buffer payload, QoS qos, boolean retain, Callback<Void> cb) {
         queue.assertExecuting();
         PUBLISH command = new PUBLISH().qos(qos).retain(retain);
         command.topicName(topic).setPayload(payload);
         send(command, cb);
     }
 
-    public void subscribe(Topic[] topics, CB1<byte[]> cb) {
+    public void subscribe(Topic[] topics, Callback<byte[]> cb) {
         queue.assertExecuting();
         if( listener == DEFAULT_LISTENER ) {
             cb.failure(createListenerNotSetError());
@@ -222,12 +222,12 @@ public class CallbackConnection {
         }
     }
 
-    public void unsubscribe(UTF8Buffer[] topics, CB0 cb) {
+    public void unsubscribe(UTF8Buffer[] topics, Callback<Void> cb) {
         queue.assertExecuting();
         send(new UNSUBSCRIBE().topics(topics), cb);
     }
 
-    private void send(Acked command, CB cb) {
+    private void send(Acked command, Callback cb) {
         if( failure !=null ) {
             if( cb!=null ) {
                 cb.failure(failure);
@@ -252,10 +252,10 @@ public class CallbackConnection {
         }
     }
 
-    private void send(MQTTFrame frame, CB cb) {
+    private void send(MQTTFrame frame, Callback cb) {
         if( overflow.isEmpty() && this.transport.offer(frame) ) {
             if( cb!=null ) {
-                ((CB0)cb).apply();
+                ((Callback<Void>)cb).apply(Void.INSTANCE);
             }
         } else {
             overflow.addLast(new Request(frame, cb));
@@ -282,7 +282,7 @@ public class CallbackConnection {
             if( this.transport.offer(entry.frame) ) {
                 overflow.removeFirst();
                 if( entry.cb!=null ) {
-                    ((CB0)entry.cb).apply();
+                    ((Callback<Void>)entry.cb).apply(Void.INSTANCE);
                 }
             } else {
                 break;
@@ -306,9 +306,9 @@ public class CallbackConnection {
             assert originalType==request.frame.commandType();
             if(request.cb!=null) {
                 if( arg==null ) {
-                    ((CB0)request.cb).apply();
+                    ((Callback<Void>)request.cb).apply(Void.INSTANCE);
                 } else {
-                    ((CB1<Object>)request.cb).apply(arg);
+                    ((Callback<Object>)request.cb).apply(arg);
                 }
             }
         } else {

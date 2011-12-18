@@ -113,7 +113,7 @@ public class MQTT {
         this.connect = new CONNECT(other.connect);
     }
 
-    public void connectCallback(final CB1<CallbackConnection> cb) {
+    public void connectCallback(final Callback<CallbackConnection> cb) {
         final MQTT builder = new MQTT(this);
         assert cb !=null : "Callback should not be null.";
         try {
@@ -207,9 +207,9 @@ public class MQTT {
         }
     }
 
-    public Future1<FutureConnection> connectFuture() {
-        final FutureCB1<FutureConnection> future = new FutureCB1<FutureConnection>();
-        connectCallback(new CB1<CallbackConnection>() {
+    public Future<FutureConnection> connectFuture() {
+        final FutureCallback<FutureConnection> future = new FutureCallback<FutureConnection>();
+        connectCallback(new Callback<CallbackConnection>() {
             public void failure(Throwable value) {
                 future.failure(value);
             }

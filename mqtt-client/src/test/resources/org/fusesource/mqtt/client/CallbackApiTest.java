@@ -45,11 +45,11 @@ public class CallbackApiTest extends TestCase {
 //    }
 
     public void testCallbackInterface() throws Exception {
-        final FutureCB1<Buffer> result = new FutureCB1<Buffer>();
+        final FutureCallback<Buffer> result = new FutureCallback<Buffer>();
         MQTT mqtt = new MQTT();
         mqtt.setHost("localhost", 1883 /* broker.port*/);
         mqtt.setClientId("Hiram");
-        mqtt.connectCallback(new CB1<CallbackConnection>() {
+        mqtt.connectCallback(new Callback<CallbackConnection>() {
             // Once we connect..
             public void apply(final CallbackConnection connection) {
 
@@ -69,7 +69,7 @@ public class CallbackApiTest extends TestCase {
 
                 // Subscribe to a topic foo
                 Topic[] topics = {new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)};
-                connection.subscribe(topics, new CB1<byte[]>() {
+                connection.subscribe(topics, new Callback<byte[]>() {
                     public void apply(byte[] value) {
 
                         // Once subscribed, publish a message on the same topic.

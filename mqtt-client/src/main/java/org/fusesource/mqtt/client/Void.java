@@ -18,14 +18,13 @@
 
 package org.fusesource.mqtt.client;
 
-import java.util.concurrent.TimeUnit;
-
 /**
- * <p>A simplified Future interface to function results.</p>
+ * <p>
+ * </p>
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public interface Future0 {
-    void await() throws Exception;
-    void await(long amount, TimeUnit unit) throws Exception;
+public class Void {
+    public static final Void INSTANCE = new Void();
+    private Void() {} 
 }
