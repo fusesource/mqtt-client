@@ -79,7 +79,7 @@ return the result via a Future.
     message.ack();
     
     Future0 f4 connection.disconnect();
-    f4.await()l
+    f4.await();
 
 
 ## Using the Callback/Continuation Passing based API
@@ -151,7 +151,7 @@ Example:
         }
     });
 
-Every connection has a [HawtDispatch][http://hawtdispatch.fusesource.org/] dispatch queue
+Every connection has a [HawtDispatch](http://hawtdispatch.fusesource.org/) dispatch queue
 which it uses to process IO events for the socket. The dispatch queue is an Executor that
 provides serial execution of IO and processing events and is used to ensure synchronized
 access of connection.
