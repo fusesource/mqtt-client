@@ -95,7 +95,7 @@ public class CallbackConnection {
             }
             public void onTransportConnected() {
             }
-            public void onTransportDisconnected() {
+            public void onTransportDisconnected(boolean reconnecting) {
             }
         });
 

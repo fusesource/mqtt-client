@@ -196,7 +196,7 @@ public class MQTT {
                 public void onRefill() {
                 }
 
-                public void onTransportDisconnected() {
+                public void onTransportDisconnected(boolean reconnecting) {
                 }
             };
             transport.setTransportListener(commandListener);
