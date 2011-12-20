@@ -1,4 +1,4 @@
 
 * [Home](${uri("/")}) 
-* [Developer Guide](${uri("/dev-guide.html")})
+<!-- * [Developer Guide](${uri("/dev-guide.html")}) -->
 

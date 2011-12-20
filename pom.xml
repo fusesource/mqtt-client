@@ -46,7 +46,6 @@
     <slf4j-version>1.6.1</slf4j-version>
     <hawtbuf-version>1.8</hawtbuf-version>
     <hawtdispatch-version>1.6</hawtdispatch-version>
-    <apollo-version>1.0-SNAPSHOT</apollo-version>
     <mvnplugins-version>1.15</mvnplugins-version>
   </properties>
   

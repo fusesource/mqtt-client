@@ -25,9 +25,9 @@ package
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 object Website {
-  val project_name= "STOMP-JMS"
-  val project_description= "STOMP-JMS is a JMS implementation using STOMP as the wire protocol"
+  val project_name= "MQTT-Client"
+  val project_description= "The Java MQTT client API"
   val project_logo= "/images/project-logo.png"
-  val project_keywords= "stomp,jms,messaging,mom,middleware,specification"
-  val website_base_url= "http://stompjms.fusesource.org"
+  val project_keywords= "mqtt,messaging,mom,middleware,specification,java"
+  val website_base_url= "http://mqtt-client.fusesource.org"
 }
