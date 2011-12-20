@@ -35,9 +35,10 @@ public class BlockingApiTest extends TestCase {
     public void testCallbackInterface() throws Exception {
         MQTT mqtt = new MQTT();
         mqtt.setHost("localhost", 1883 /* broker.port*/);
-        mqtt.setClientId("Hiram");
 
-        BlockingConnection connection = mqtt.connectBlocking();
+        BlockingConnection connection = mqtt.blockingConnection();
+        connection.connect();
+
         Topic[] topics = {new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)};
         byte[] qoses = connection.subscribe(topics);
 

@@ -18,8 +18,8 @@ the `host` and `clientId` fields must be set before attempting to connect.
 The `MQTT.connectBlocking` method establishes a connection and provides you a connection
 with an blocking API.
 
-    BlockingConnection connection = mqtt.connectBlocking();
-    
+    BlockingConnection connection = mqtt.blockingConnection();
+    connection.connect();
 
 Publish messages to a topic using the `publish` method:
 
@@ -49,23 +49,24 @@ The `MQTT.connectFuture` method establishes a connection and provides you a conn
 with an futures style API.  All operations against the connection are non-blocking and
 return the result via a Future.
 
-    Future1<FutureConnection> f1 = mqtt.connectFuture();
-    FutureConnection connection = f1.await();
+    FutureConnection connection = mqtt.futureConnection();
+    Future<Void> f1 = connection.connect();
+    f1.await();
 
-    Future1<byte[]> f2 = connection.subscribe(new Topic[]{new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)});
+    Future<byte[]> f2 = connection.subscribe(new Topic[]{new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)});
     byte[] qoses = f2.await();
 
     // We can start future receive..
-    Future1<Message> receive = connection.receive();
+    Future<Message> receive = connection.receive();
 
     // send the message..
-    Future0 f3 = connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false);
+    Future<Void> f3 = connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false);
 
     // Then the receive will get the message.
     Message message = receive.await();
     message.ack();
     
-    Future0 f4 connection.disconnect();
+    Future<Void> f4 connection.disconnect();
     f4.await();
 
 
@@ -79,32 +80,31 @@ callback interfaces you implement.
 
 Example:
 
-    mqtt.connectCallback(new Callback<CallbackConnection>() {
-  
+    final CallbackConnection connection = mqtt.callbackConnection();
+    connection.listener(new Listener() {
+      
+        public void onDisconnected() {
+        }
+        public void onConnected() {
+        }
+
+        public void onSuccess(UTF8Buffer topic, Buffer payload, Runnable ack) {
+            // You can now process a received message from a topic.
+            // Once process execute the ack runnable.
+            ack.run();
+        }
+        public void onFailure(Throwable value) {
+            connection.close(null); // a connection failure occured.
+        }
+    })
+    connection.connect(new Callback<Void>() {
         public void onFailure(Throwable value) {
             result.failure(value); // If we could not connect to the server.
         }
   
         // Once we connect..
-        public void onSuccess(final CallbackConnection connection) {
-
-            // Add a listener to process subscirption messages, and start the
-            // resume the connection so it starts receiving messages from the socket.
-            connection.listener(new Listener() {
-                public void onSuccess(UTF8Buffer topic, Buffer payload, Runnable ack) {
-                    // You can now process a received message from a topic.
-                    // Once process execute the ack runnable.
-                    ack.run();
-                }
-                public void onFailure(Throwable value) {
-                    connection.close(null); // a connection failure occured.
-                }
-            })
+        public void onSuccess(Void v) {
         
-            // A connection starts suspended, so you can set a listener.
-            // resume the connection to start processing IO events from the server.
-            connection.resume();
-
             // Subscribe to a topic
             Topic[] topics = {new Topic("foo", QoS.AT_LEAST_ONCE)};
             connection.subscribe(topics, new Callback<byte[]>() {

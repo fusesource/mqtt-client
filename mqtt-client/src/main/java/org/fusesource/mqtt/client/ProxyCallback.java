@@ -18,18 +18,26 @@
 
 package org.fusesource.mqtt.client;
 
-import org.fusesource.hawtbuf.Buffer;
-import org.fusesource.hawtbuf.UTF8Buffer;
-
 /**
  * <p>
+ * Function Result that carries one value.
  * </p>
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public interface Listener {
-    public void onConnected();
-    public void onDisconnected();
-    public void onPublish(UTF8Buffer topic, Buffer body, Runnable ack);
-    public void onFailure(Throwable value);
+public class ProxyCallback<T> implements Callback<T> {
+
+    public final Callback<T> next;
+
+    public ProxyCallback(Callback<T> next) {
+        this.next = next;
+    }
+
+    public void onSuccess(T value) {
+        next.onSuccess(value);
+    }
+
+    public void onFailure(Throwable value) {
+        next.onFailure(value);
+    }
 }

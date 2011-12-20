@@ -41,6 +41,14 @@ public class BlockingConnection {
         this.next = next;
     }
 
+    public boolean isConnected() {
+        return next.isConnected();
+    }
+
+    public void connect() throws Exception {
+        this.next.connect().await();
+    }
+
     public void disconnect() throws Exception {
         this.next.disconnect().await();
     }

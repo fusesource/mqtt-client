@@ -169,8 +169,12 @@ public class MQTTProtocolCodec implements ProtocolCodec {
                     throw new IOException("The maximum message length was exceeded");
                 }
                 byte header = buffer.get(read_start);
-                next_action = read_body(header, length);
                 read_start = read_end;
+                if( length > 0 ) {
+                    next_action = read_body(header, length);
+                } else {
+                    return new MQTTFrame().header(header);
+                }
             }
             return null;
         }

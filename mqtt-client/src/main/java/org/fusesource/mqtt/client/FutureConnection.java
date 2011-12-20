@@ -41,10 +41,21 @@ public class FutureConnection {
     private LinkedList<Promise<Message>> receiveFutures = new LinkedList<Promise<Message>>();
     private LinkedList<Message> receivedFrames = new LinkedList<Message>();
 
+    volatile boolean connected;
+
     public FutureConnection(CallbackConnection next) {
         this.next = next;
         this.next.listener(new Listener() {
-            public void apply(UTF8Buffer topic, Buffer payload, Runnable onComplete) {
+
+            public void onConnected() {
+                connected = true;
+            }
+
+            public void onDisconnected() {
+                connected = false;
+            }
+
+            public void onPublish(UTF8Buffer topic, Buffer payload, Runnable onComplete) {
                 getDispatchQueue().assertExecuting();
                 Message msg = new Message(getDispatchQueue(), topic, payload, onComplete);
                 if( receiveFutures.isEmpty() ) {
@@ -53,7 +64,7 @@ public class FutureConnection {
                     receiveFutures.removeFirst().onSuccess(msg);
                 }
             }
-            public void failure(Throwable value) {
+            public void onFailure(Throwable value) {
                 getDispatchQueue().assertExecuting();
                 ArrayList<Promise<?>> tmp = new ArrayList<Promise<?>>(receiveFutures);
                 receiveFutures.clear();
@@ -62,11 +73,25 @@ public class FutureConnection {
                 }
             }
         });
-        this.next.resume();
+    }
+
+    public boolean isConnected() {
+        return connected;
     }
 
     private DispatchQueue getDispatchQueue() {
         return this.next.getDispatchQueue();
+    }
+
+
+    public Future<Void> connect() {
+        final Promise<Void> future = new Promise<Void>();
+        next.getDispatchQueue().execute(new Runnable() {
+            public void run() {
+                next.connect(future);
+            }
+        });
+        return future;
     }
 
     public Future<Void> disconnect() {

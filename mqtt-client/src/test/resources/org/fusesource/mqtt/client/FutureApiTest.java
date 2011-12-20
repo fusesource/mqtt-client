@@ -37,10 +37,10 @@ public class FutureApiTest extends TestCase {
 
         MQTT mqtt = new MQTT();
         mqtt.setHost("localhost", 1883 /* broker.port*/);
-        mqtt.setClientId("Hiram");
 
-        Future<FutureConnection> f1 = mqtt.connectFuture();
-        FutureConnection connection = f1.await();
+        FutureConnection connection = mqtt.futureConnection();
+        Future<Void> f1 = connection.connect();
+        f1.await();
 
         Future<byte[]> f2 = connection.subscribe(new Topic[]{new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)});
         byte[] qoses = f2.await();
