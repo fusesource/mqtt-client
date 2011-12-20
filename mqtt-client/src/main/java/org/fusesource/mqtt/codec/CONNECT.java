@@ -37,7 +37,7 @@ public class CONNECT implements Command {
     private static final Buffer PROTOCOL_NAME = new AsciiBuffer("MQIsdp").buffer();
     private static final int PROTOCOL_VERSION = 3;
 
-    private short keepAlive = 3;
+    private short keepAlive = 30;
     private UTF8Buffer clientId;
     private UTF8Buffer willTopic;
     private UTF8Buffer willMessage;
