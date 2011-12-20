@@ -40,7 +40,7 @@ public class CONNECT implements Command {
     private short keepAlive = 30;
     private UTF8Buffer clientId;
     private UTF8Buffer willTopic;
-    private UTF8Buffer willMessage;
+    private UTF8Buffer willMessage = new UTF8Buffer("");
     private boolean willRetain;
     private byte willQos;
     private boolean cleanSession = true;
