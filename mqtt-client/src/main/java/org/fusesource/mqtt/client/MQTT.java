@@ -85,6 +85,7 @@ public class MQTT {
     }
 
     URI host = DEFAULT_HOST; 
+    URI localURI;
     SSLContext sslContext;
     DispatchQueue dispatchQueue;
     Executor blockingExecutor;
@@ -106,6 +107,7 @@ public class MQTT {
     }
     public MQTT(MQTT other) {
         this.host = other.host;
+        this.localURI = other.localURI;
         this.sslContext = other.sslContext;
         this.dispatchQueue = other.dispatchQueue;
         this.blockingExecutor = other.blockingExecutor;
@@ -233,6 +235,14 @@ public class MQTT {
 
     public void setDispatchQueue(DispatchQueue dispatchQueue) {
         this.dispatchQueue = dispatchQueue;
+    }
+
+    public URI getLocalURI() {
+        return localURI;
+    }
+
+    public void setLocalURI(URI localURI) {
+        this.localURI = localURI;
     }
 
     public int getMaxReadRate() {
