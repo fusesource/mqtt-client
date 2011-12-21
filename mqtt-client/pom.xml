@@ -38,6 +38,11 @@
         STOMP-JMS is a JMS implementation using STOMP as the wire protocol
   </description>
   
+  <properties>
+    <osgi-version>4.2.0</osgi-version>
+    <asm-version>3.1</asm-version>
+  </properties>
+
   <dependencies>
 
     <dependency>
@@ -51,12 +56,26 @@
       <artifactId>hawtbuf</artifactId>
       <version>${hawtbuf-version}</version>
     </dependency>
-    <!-- <dependency>
-      <groupId>org.fusesource.stompjms</groupId>
-      <artifactId>stompjms-client</artifactId>
-      <version>1.5-SNAPSHOT</version>
-    </dependency> -->
 
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.core</artifactId>
+      <version>${osgi-version}</version>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.compendium</artifactId>
+      <version>${osgi-version}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm-tree</artifactId>
+      <version>${asm-version}</version>
+      <optional>true</optional>
+    </dependency>
     
     <!-- Testing Dependencies -->
     <dependency>
@@ -77,42 +96,88 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.fusesource.mvnplugins</groupId>
-        <artifactId>maven-uberize-plugin</artifactId>
-        <version>${mvnplugins-version}</version>
+        <groupId>com.pyx4me</groupId>
+        <artifactId>proguard-maven-plugin</artifactId>
+        <version>2.0.4</version>
         <executions>
           <execution>
-            <id>all</id>
             <phase>package</phase>
-            <goals><goal>uberize</goal></goals>
-            <configuration>
-              <uberArtifactAttached>true</uberArtifactAttached>
-              <uberClassifierName>uber</uberClassifierName>
-              <artifactSet>
-                <includes>
-                  <include>org.fusesource.mqtt-client:mqtt-client</include>
-                  <include>org.fusesource.hawtdispatch:hawtdispatch</include>
-                  <include>org.fusesource.hawtdispatch:hawtdispatch-transport</include>
-                  <include>org.fusesource.hawtbuf:hawtbuf</include>
-                </includes>
-              </artifactSet>            
-              <!-- <filters>
-                <filter>
-                  <artifact>org.apache.activemq:apollo-web</artifact>
-                  <excludes>
-                    <exclude>WEB-INF/classes/**</exclude>
-                    <exclude>WEB-INF/lib/**</exclude>
-                    <exclude>**/*.scaml</exclude>
-                    <exclude>**/*.jade</exclude>
-                    <exclude>**/*.ssp</exclude>
-                  </excludes>
-                </filter>
-              </filters>             -->
-            </configuration>
+            <goals>
+              <goal>proguard</goal>
+            </goals>
           </execution>
         </executions>
+        <configuration>
+          <injar>${project.build.finalName}.jar</injar>
+          <outjar>${project.build.finalName}-uber.jar</outjar>          
+          <attach>true</attach>
+          <attachArtifactClassifier>uber</attachArtifactClassifier>
+          <libs>
+            <lib>${rt.jar.path}</lib>
+            <lib>${jsse.jar.path}</lib>
+          </libs>
+          <assembly>
+            <inclusions>
+              <inclusion>
+                <groupId>org.fusesource.hawtdispatch</groupId>
+                <artifactId>hawtdispatch-transport</artifactId>
+              </inclusion>
+              <inclusion>
+                <groupId>org.fusesource.hawtdispatch</groupId>
+                <artifactId>hawtdispatch</artifactId>
+              </inclusion>
+              <inclusion>
+                <groupId>org.fusesource.hawtbuf</groupId>
+                <artifactId>hawtbuf</artifactId>
+              </inclusion>
+            </inclusions>
+          </assembly>
+          <obfuscate>false</obfuscate>
+          <options>
+            <option>-keep class org.fusesource.mqtt.**</option>
+            <option>-keep class org.fusesource.mqtt.** {
+              public static void main(java.lang.String[]);
+            }</option>
+            <option>-dontoptimize</option>
+          </options>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>net.sf.proguard</groupId>
+            <artifactId>proguard</artifactId>
+            <version>4.4</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>        
       </plugin>
+
     </plugins>
   </build>
-      
+  
+  <profiles>
+    <profile>
+      <id>unix</id>
+      <activation><os><family>unix</family></os></activation>
+      <properties>
+        <rt.jar.path>${java.home}/jre/lib/rt.jar</rt.jar.path>
+        <jsse.jar.path>${java.home}/jre/lib/jsse.jar</jsse.jar.path>
+      </properties>
+    </profile>
+    <profile>
+      <id>mac</id>
+      <activation><os><family>mac</family></os></activation>
+      <properties>
+        <rt.jar.path>${java.home}/../Classes/classes.jar</rt.jar.path>
+        <jsse.jar.path>${java.home}/../Classes/jsse.jar</jsse.jar.path>
+      </properties>
+    </profile>
+    <profile>
+      <id>windows</id>
+      <activation><os><family>windows</family></os></activation>
+      <properties>
+        <rt.jar.path>${java.home}/jre/lib/rt.jar</rt.jar.path>
+        <jsse.jar.path>${java.home}/jre/lib/jsse.jar</jsse.jar.path>
+      </properties>
+    </profile>
+  </profiles>
 </project>

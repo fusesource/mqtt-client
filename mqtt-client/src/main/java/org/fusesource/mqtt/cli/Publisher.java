@@ -3,14 +3,14 @@
  */
 package org.fusesource.mqtt.cli;
 
+import org.fusesource.hawtbuf.AsciiBuffer;
 import org.fusesource.hawtbuf.Buffer;
+import org.fusesource.hawtbuf.ByteArrayOutputStream;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.mqtt.client.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
@@ -32,6 +32,7 @@ public class Publisher {
     private boolean retain;
     private long count = 1;
     private long sleep;
+    private boolean prefixCounter;
 
     private static void displayHelpAndExit(int exitCode) {
         stdout("");
@@ -39,7 +40,7 @@ public class Publisher {
         stdout("");
         stdout("Arguments: [-h host] [-k keepalive] [-c] [-i id] [-u username [-p password]]");
         stdout("           [--will-topic topic [--will-payload payload] [--will-qos qos] [--will-retain]]");
-        stdout("           [-d] [-n count] [-s sleep] [-q qos] [-r] -t topic ( -m message | -z | -f file )");
+        stdout("           [-d] [-n count] [-s sleep] [-q qos] [-r] -t topic ( -pc | -m message | -z | -f file )");
         stdout("");
         stdout("");
         stdout(" -h : mqtt host uri to connect to. Defaults to tcp://localhost:1883.");
@@ -63,6 +64,7 @@ public class Publisher {
         stdout(" -m : message payload to send.");
         stdout(" -z : send a null (zero length) message.");
         stdout(" -f : send the contents of a file as the message.");
+        stdout(" -pc : prefix a message counter to the message");
         stdout("");
         System.exit(exitCode);
     }
@@ -149,6 +151,8 @@ public class Publisher {
                     } finally {
                         raf.close();
                     }
+                } else if ("-pc".equals(arg)) {
+                    main.prefixCounter = true;
                 } else {
                     stderr("Invalid usage: unknown option: " + arg);
                     displayHelpAndExit(1);
@@ -243,8 +247,16 @@ public class Publisher {
             long sent = 0;
             public void run() {
                 final Runnable publish = this;
-                System.out.println("Sending message...");
-                connection.publish(topic, body, qos, retain, new Callback<Void>() {
+                Buffer message  = body;
+                if(prefixCounter) {
+                    long id = sent + 1;
+                    ByteArrayOutputStream os = new ByteArrayOutputStream(message.length + 15);
+                    os.write(new AsciiBuffer(Long.toString(id)));
+                    os.write(':');
+                    os.write(body);
+                    message = os.toBuffer();
+                }
+                connection.publish(topic, message, qos, retain, new Callback<Void>() {
                     public void onSuccess(Void value) {
                         sent ++;
                         if(debug) {
