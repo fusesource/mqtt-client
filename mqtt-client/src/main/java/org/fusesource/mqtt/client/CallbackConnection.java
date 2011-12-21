@@ -27,7 +27,6 @@ import org.fusesource.mqtt.codec.CommandSupport.Acked;
 import org.fusesource.mqtt.codec.*;
 
 import javax.net.ssl.SSLContext;
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
@@ -243,7 +242,7 @@ public class CallbackConnection {
             tcp.setSendBufferSize(mqtt.sendBufferSize);
             tcp.setTrafficClass(mqtt.trafficClass);
             tcp.setUseLocalHost(mqtt.useLocalHost);
-            tcp.connecting(mqtt.host, mqtt.localURI);
+            tcp.connecting(mqtt.host, mqtt.localAddress);
         }
 
         transport.setTransportListener(new DefaultTransportListener(){
