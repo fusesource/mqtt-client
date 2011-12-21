@@ -22,83 +22,6 @@ attempting to connect.
     // or 
     mqtt.setHost("tcp://localhost:1883");
     
-### Using SSL connections
-
-If you want to connect over SSL/TLS instead of TCP, use an "ssl://" or
-"tls://" URI prefix instead of "tcp://" for the `host` field. For finer
-grained control of which algorithm is used. Supported protocol values are:
-
-* `ssl://`    - Use the JVM default version of the SSL algorithm.
-* `sslv*://`  - Use a specific SSL version where `*` is a version
-  supported by your JVM.  Example: `sslv3`
-* `tls://`    - Use the JVM default version of the TLS algorithm.
-* `tlsv*://`  - Use a specific TLS version where `*` is a version
-  supported by your JVM.  Example: `tlsv1.1`
-
-The client will use the default JVM `SSLContext` which is configured via JVM
-system properties unless you configure the MQTT instance using the
-`setSslContext` method.
-
-SSL connections perform blocking operations against internal thread pool
-unless you call the `setBlockingExecutor` method to configure that executor
-they will use instead.
-
-### Selecting the Dispatch Queue
-
-A [HawtDispatch](http://hawtdispatch.fusesource.org/) dispatch queue is used
-to synchronize access to the connection. If an explicit queue is not
-configured via the `setDispatchQueue` method, then a new queue will be created
-for the connection. Setting an explicit queue might be handy if you want
-multiple connection to share the same queue for synchronization.
-
-### Configuring Socket Options
-
-You can adjust some socket options by using the following methods:
-
-* `setReceiveBufferSize` : Sets the size of the internal socket receive 
-   buffer.  Defaults to 65536 (64k)
-
-* `setSendBufferSize` : Sets the size of the internal socket send buffer.  
-   Defaults to 65536 (64k)
-
-* `setTrafficClass` : Sets traffic class or type-of-service octet in the IP 
-  header for packets sent from the transport.  Defaults to `8` which
-  means the traffic should be optimized for throughput.
-
-### Throttling Connections
-
-If you want slow down the read or write rate of your connections, use 
-the following methods:
-
-* `setMaxReadRate` : Sets the maximum bytes per second that this transport will
-  receive data at.  This setting throttles reads so that the rate is not exceeded.
-  Defaults to 0 which disables throttling.
-
-* `setMaxWriteRate` : Sets the maximum bytes per second that this transport will
-  send data at.  This setting throttles writes so that the rate is not exceeded.
-  Defaults to 0 which disables throttling.
-
-
-### Controlling Connection Reconnects
-
-Connection will automatically reconnect and re-establish messaging session
-if any network error occurs.  You can control how often the reconnect
-is attempted and define maximum number of attempts of reconnects using
-the following methods:
-
-* `setConnectAttemptsMax` : The maximum number of reconnect attempts before an error 
-  is reported back to the client on the first attempt by the client to connect to a server. Set
-  to -1 to use unlimited attempts.  Defaults to -1.
-* `setReconnectAttemptsMax` : The maximum number of reconnect attempts before an error 
-  is reported back to the client after a server connection had previously been established. Set
-  to -1 to use unlimited attempts.  Defaults to -1.
-* `setReconnectDelay` : How long to wait in ms before the first reconnect 
-   attempt. Defaults to 10.
-* `setReconnectDelayMax` : The maximum amount of time in ms to wait between 
-   reconnect attempts.  Defaults to 30,000.
-* `setReconnectBackOffMultiplier` : The Exponential backoff be used between reconnect attempts. Set to 1 to
-  disable exponential backoff. Defaults to 2.
-
 ### Controlling MQTT Options
 
 
@@ -129,6 +52,82 @@ the following methods:
 
 * `setWillRetain`: Set to true if you want the Will to be published with the retain 
   option.
+
+### Controlling Connection Reconnects
+
+Connection will automatically reconnect and re-establish messaging session
+if any network error occurs.  You can control how often the reconnect
+is attempted and define maximum number of attempts of reconnects using
+the following methods:
+
+* `setConnectAttemptsMax` : The maximum number of reconnect attempts before an error 
+  is reported back to the client on the first attempt by the client to connect to a server. Set
+  to -1 to use unlimited attempts.  Defaults to -1.
+* `setReconnectAttemptsMax` : The maximum number of reconnect attempts before an error 
+  is reported back to the client after a server connection had previously been established. Set
+  to -1 to use unlimited attempts.  Defaults to -1.
+* `setReconnectDelay` : How long to wait in ms before the first reconnect 
+   attempt. Defaults to 10.
+* `setReconnectDelayMax` : The maximum amount of time in ms to wait between 
+   reconnect attempts.  Defaults to 30,000.
+* `setReconnectBackOffMultiplier` : The Exponential backoff be used between reconnect 
+  attempts. Set to 1 to disable exponential backoff. Defaults to 2.
+
+### Configuring Socket Options
+
+You can adjust some socket options by using the following methods:
+
+* `setReceiveBufferSize` : Sets the size of the internal socket receive 
+   buffer.  Defaults to 65536 (64k)
+
+* `setSendBufferSize` : Sets the size of the internal socket send buffer.  
+   Defaults to 65536 (64k)
+
+* `setTrafficClass` : Sets traffic class or type-of-service octet in the IP 
+  header for packets sent from the transport.  Defaults to `8` which
+  means the traffic should be optimized for throughput.
+
+### Throttling Connections
+
+If you want slow down the read or write rate of your connections, use 
+the following methods:
+
+* `setMaxReadRate` : Sets the maximum bytes per second that this transport will
+  receive data at.  This setting throttles reads so that the rate is not exceeded.
+  Defaults to 0 which disables throttling.
+
+* `setMaxWriteRate` : Sets the maximum bytes per second that this transport will
+  send data at.  This setting throttles writes so that the rate is not exceeded.
+  Defaults to 0 which disables throttling.
+
+### Using SSL connections
+
+If you want to connect over SSL/TLS instead of TCP, use an "ssl://" or
+"tls://" URI prefix instead of "tcp://" for the `host` field. For finer
+grained control of which algorithm is used. Supported protocol values are:
+
+* `ssl://`    - Use the JVM default version of the SSL algorithm.
+* `sslv*://`  - Use a specific SSL version where `*` is a version
+  supported by your JVM.  Example: `sslv3`
+* `tls://`    - Use the JVM default version of the TLS algorithm.
+* `tlsv*://`  - Use a specific TLS version where `*` is a version
+  supported by your JVM.  Example: `tlsv1.1`
+
+The client will use the default JVM `SSLContext` which is configured via JVM
+system properties unless you configure the MQTT instance using the
+`setSslContext` method.
+
+SSL connections perform blocking operations against internal thread pool
+unless you call the `setBlockingExecutor` method to configure that executor
+they will use instead.
+
+### Selecting the Dispatch Queue
+
+A [HawtDispatch](http://hawtdispatch.fusesource.org/) dispatch queue is used
+to synchronize access to the connection. If an explicit queue is not
+configured via the `setDispatchQueue` method, then a new queue will be created
+for the connection. Setting an explicit queue might be handy if you want
+multiple connection to share the same queue for synchronization.
 
 ## Using the Blocking API
 
