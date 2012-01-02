@@ -10,6 +10,33 @@ automatically reconnecting to your MQTT server and restoring your client
 session if any network failures occur. Applications can use a blocking API
 style, a futures based API, or a callback/continuations passing API style.
 
+## Using from Maven
+
+Add the following to your maven `pom.xml` file.
+
+    <dependency>
+      <groupId>org.fusesource.mqtt-client</groupId>
+      <artifactId>mqtt-client</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <repositories>
+      <repository>
+        <id>fusesource.snapshots</id>
+        <name>FuseSource Snapshot Repository</name>
+        <url>http://repo.fusesource.com/nexus/content/repositories/snapshots</url>
+        <snapshots><enabled>true</enabled></snapshots>
+        <releases><enabled>false</enabled></releases>
+      </repository>
+    </repositories>
+
+## Using from any Other Build System
+
+Download the uber 
+[jar file](http://repo.fusesource.com/nexus/service/local/artifact/maven/redirect?r=snapshots&g=org.fusesource.mqtt-client&a=mqtt-client&v=1.0-SNAPSHOT&e=jar&c=uber) 
+and add it to your build. The uber contains all the stripped down dependencies
+which the mqtt-client depends on from other projects.
+
 ## Configuring the MQTT Connection
 
 The blocking, future, and callback APIs all share the same connection setup.
