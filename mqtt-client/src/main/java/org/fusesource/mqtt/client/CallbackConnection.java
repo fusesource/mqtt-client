@@ -23,7 +23,7 @@ import org.fusesource.hawtbuf.HexSupport;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.hawtdispatch.DispatchQueue;
 import org.fusesource.hawtdispatch.transport.*;
-import org.fusesource.mqtt.codec.CommandSupport.Acked;
+import org.fusesource.mqtt.codec.MessageSupport.Acked;
 import org.fusesource.mqtt.codec.*;
 
 import javax.net.ssl.SSLContext;
@@ -118,7 +118,7 @@ public class CallbackConnection {
 
     void handleSessionFailure(Throwable error) {
         // Socket failure, should we try to reconnect?
-        if( !disconnected && (mqtt.connectAttemptsMax<0 || reconnects < mqtt.reconnectAttemptsMax ) ) {
+        if( !disconnected && (mqtt.reconnectAttemptsMax<0 || reconnects < mqtt.reconnectAttemptsMax ) ) {
             // Cleanup the previous transport.
             if(heartBeatMonitor!=null) {
                 heartBeatMonitor.stop();
@@ -289,7 +289,7 @@ public class CallbackConnection {
                 public void onTransportCommand(Object command) {
                     MQTTFrame response = (MQTTFrame) command;
                     try {
-                        switch (response.commandType()) {
+                        switch (response.messageType()) {
                             case CONNACK.TYPE:
                                 CONNACK connack = new CONNACK().decode(response);
                                 switch (connack.code()) {
@@ -310,7 +310,7 @@ public class CallbackConnection {
                                 break;
                             default:
                                 // Naughty MQTT server? No point in reconnecting.
-                                cb.onFailure(new IOException("Could not connect. Received unexpected command: " + response.commandType()));
+                                cb.onFailure(new IOException("Could not connect. Received unexpected command: " + response.messageType()));
 
                         }
                     } catch (ProtocolException e) {
@@ -320,12 +320,12 @@ public class CallbackConnection {
                 }
             });
             transport.resumeRead();
-            if( mqtt.connect.getClientId() == null ) {
+            if( mqtt.connect.clientId() == null ) {
                 String id = hex(transport.getLocalAddress())+Long.toHexString(System.currentTimeMillis()/1000);
                 if(id.length() > 23) {
                     id = id.substring(0,23);
                 }
-                mqtt.connect.setClientId(utf8(id));
+                mqtt.connect.clientId(utf8(id));
             }
             boolean accepted = transport.offer(mqtt.connect.encode());
             assert accepted: "First frame should always be accepted by the transport";
@@ -445,7 +445,6 @@ public class CallbackConnection {
     }
 
     public CallbackConnection listener(Listener listener) {
-        queue.assertExecuting();
         this.listener = listener;
         return this;
     }
@@ -530,7 +529,7 @@ public class CallbackConnection {
             return;
         }
         PUBLISH command = new PUBLISH().qos(qos).retain(retain);
-        command.topicName(topic).setPayload(payload);
+        command.topicName(topic).payload(payload);
         send(command, cb);
     }
 
@@ -644,7 +643,7 @@ public class CallbackConnection {
     private void completeRequest(short id, byte originalType, Object arg) {
         Request request = requests.remove(id);
         if( request!=null ) {
-            assert originalType==request.frame.commandType();
+            assert originalType==request.frame.messageType();
             if(request.cb!=null) {
                 if( arg==null ) {
                     ((Callback<Void>)request.cb).onSuccess(null);
@@ -659,7 +658,7 @@ public class CallbackConnection {
 
     private void processFrame(MQTTFrame frame) {
         try {
-            switch(frame.commandType()) {
+            switch(frame.messageType()) {
                 case PUBLISH.TYPE: {
                     PUBLISH publish = new PUBLISH().decode(frame);
                     toReceiver(publish);
@@ -668,9 +667,9 @@ public class CallbackConnection {
                 case PUBREL.TYPE:{
                     PUBREL ack = new PUBREL().decode(frame);
                     processed.remove(ack.messageId());
-                    PUBCOMP reponse = new PUBCOMP();
-                    reponse.messageId(ack.messageId());
-                    send(new Request(0, reponse.encode(), null));
+                    PUBCOMP response = new PUBCOMP();
+                    response.messageId(ack.messageId());
+                    send(new Request(0, response.encode(), null));
                     break;
                 }
                 case PUBACK.TYPE:{
@@ -680,9 +679,9 @@ public class CallbackConnection {
                 }
                 case PUBREC.TYPE:{
                     PUBREC ack = new PUBREC().decode(frame);
-                    PUBREL reponse = new PUBREL();
-                    reponse.messageId(ack.messageId());
-                    send(new Request(0, reponse.encode(), null));
+                    PUBREL response = new PUBREL();
+                    response.messageId(ack.messageId());
+                    send(new Request(0, response.encode(), null));
                     break;
                 }
                 case PUBCOMP.TYPE:{
@@ -705,7 +704,7 @@ public class CallbackConnection {
                     break;
                 }
                 default:
-                    throw new ProtocolException("Unexpected MQTT command type: "+frame.commandType());
+                    throw new ProtocolException("Unexpected MQTT command type: "+frame.messageType());
             }
         } catch (Throwable e) {
             handleFatalFailure(e);
@@ -725,19 +724,19 @@ public class CallbackConnection {
                     case AT_LEAST_ONCE:
                         cb = new Runnable() {
                             public void run() {
-                                PUBACK reponse = new PUBACK();
-                                reponse.messageId(publish.messageId());
-                                send(new Request(0, reponse.encode(), null));
+                                PUBACK response = new PUBACK();
+                                response.messageId(publish.messageId());
+                                send(new Request(0, response.encode(), null));
                             }
                         };
                         break;
                     case EXACTLY_ONCE:
                         cb = new Runnable() {
                             public void run() {
-                                PUBREC reponse = new PUBREC();
-                                reponse.messageId(publish.messageId());
+                                PUBREC response = new PUBREC();
+                                response.messageId(publish.messageId());
                                 processed.add(publish.messageId());
-                                send(new Request(0, reponse.encode(), null));
+                                send(new Request(0, response.encode(), null));
                             }
                         };
                         // It might be a dup.

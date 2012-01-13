@@ -33,14 +33,14 @@ import java.net.ProtocolException;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class CommandSupport {
+public class MessageSupport {
 
     /**
      * All command objects implement this interface.
      */
-    static public interface Command {
-        public byte getType();
-        public Command decode(MQTTFrame frame) throws ProtocolException;
+    static public interface Message {
+        public byte messageType();
+        public Message decode(MQTTFrame frame) throws ProtocolException;
         public MQTTFrame encode();
     }
 
@@ -48,7 +48,7 @@ public class CommandSupport {
     /**
      * All command objects that can get acked implement this interface.
      */
-    static public interface Acked extends Command {
+    static public interface Acked extends Message {
         public boolean dup();
         public Acked dup(boolean dup);
         public QoS qos();
@@ -74,7 +74,7 @@ public class CommandSupport {
 
         short messageId;
 
-        abstract byte getType();
+        abstract byte messageType();
 
         protected AckBase decode(MQTTFrame frame) throws ProtocolException {
             assert(frame.buffers.length == 1);
@@ -89,7 +89,7 @@ public class CommandSupport {
                 os.writeShort(messageId);
 
                 MQTTFrame frame = new MQTTFrame();
-                frame.commandType(getType());
+                frame.commandType(messageType());
                 return frame.buffer(os.toBuffer());
             } catch (IOException e) {
                 throw new RuntimeException("The impossible happened");
@@ -114,13 +114,13 @@ public class CommandSupport {
     }
 
     static abstract public class EmptyBase {
-        abstract  byte getType();
+        abstract  byte messageType();
 
         protected EmptyBase decode(MQTTFrame frame) throws ProtocolException {
             return this;
         }
         public MQTTFrame encode() {
-            return new MQTTFrame().commandType(getType());
+            return new MQTTFrame().commandType(messageType());
         }
     }
 
@@ -143,7 +143,7 @@ public class CommandSupport {
            return this;
        }
 
-       protected byte commandType() {
+       protected byte messageType() {
            return (byte) ((header & 0xF0) >>> 4);
        }
        protected HeaderBase commandType(int type) {

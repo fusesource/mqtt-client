@@ -20,7 +20,7 @@ package org.fusesource.mqtt.codec;
 
 import java.net.ProtocolException;
 
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -28,11 +28,11 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class DISCONNECT extends EmptyBase implements Command {
+public class DISCONNECT extends EmptyBase implements Message {
 
     public static final byte TYPE = 14;
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 

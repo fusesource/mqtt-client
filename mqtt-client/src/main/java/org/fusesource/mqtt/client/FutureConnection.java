@@ -64,6 +64,7 @@ public class FutureConnection {
                     receiveFutures.removeFirst().onSuccess(msg);
                 }
             }
+
             public void onFailure(Throwable value) {
                 getDispatchQueue().assertExecuting();
                 ArrayList<Promise<?>> tmp = new ArrayList<Promise<?>>(receiveFutures);
@@ -71,6 +72,7 @@ public class FutureConnection {
                 for (Promise<?> future : tmp) {
                     future.onFailure(value);
                 }
+                connected = false;
             }
         });
     }

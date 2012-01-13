@@ -19,10 +19,11 @@
 package org.fusesource.mqtt.codec;
 
 import org.fusesource.hawtbuf.*;
+import org.fusesource.mqtt.client.QoS;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -30,7 +31,7 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class CONNECT implements Command {
+public class CONNECT implements Message {
 
     public static final byte TYPE = 1;
     
@@ -46,6 +47,7 @@ public class CONNECT implements Command {
     private boolean cleanSession = true;
     private UTF8Buffer userName;
     private UTF8Buffer password;
+    private int version;
 
 
     public CONNECT(){
@@ -63,7 +65,7 @@ public class CONNECT implements Command {
         this.password = other.password;
     }
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 
@@ -71,15 +73,12 @@ public class CONNECT implements Command {
         assert(frame.buffers.length == 1);
         DataByteArrayInputStream is = new DataByteArrayInputStream(frame.buffers[0]);
 
-        if( !PROTOCOL_NAME.equals(CommandSupport.readUTF(is)) ) {
+        if( !PROTOCOL_NAME.equals(MessageSupport.readUTF(is)) ) {
             throw new ProtocolException("Invalid CONNECT encoding");
         }
-        int version = is.readByte();
-        if( version != PROTOCOL_VERSION ) {
-            throw new ProtocolException("MQTT version "+version+" not supported");
-        }
-        byte flags = is.readByte();
 
+        version = is.readByte() & 0xFF;
+        byte flags = is.readByte();
         boolean username_flag = (flags & 0x80) > 0;
         boolean password_flag = (flags & 0x40) > 0;
         willRetain = (flags & 0x20) > 0;
@@ -88,16 +87,16 @@ public class CONNECT implements Command {
         cleanSession = (flags & 0x02) > 0;
 
         keepAlive = is.readShort();
-        clientId = CommandSupport.readUTF(is);
+        clientId = MessageSupport.readUTF(is);
         if(will_flag) {
-            willTopic = CommandSupport.readUTF(is);
-            willMessage = CommandSupport.readUTF(is);
+            willTopic = MessageSupport.readUTF(is);
+            willMessage = MessageSupport.readUTF(is);
         }
         if( username_flag ) {
-            userName = CommandSupport.readUTF(is);
+            userName = MessageSupport.readUTF(is);
         }
         if( password_flag ) {
-            password = CommandSupport.readUTF(is);
+            password = MessageSupport.readUTF(is);
         }
         return this;
     }
@@ -105,7 +104,7 @@ public class CONNECT implements Command {
     public MQTTFrame encode() {
         try {
             DataByteArrayOutputStream os = new DataByteArrayOutputStream(500);
-            CommandSupport.writeUTF(os, PROTOCOL_NAME);
+            MessageSupport.writeUTF(os, PROTOCOL_NAME);
             os.writeByte(PROTOCOL_VERSION);
             int flags = 0;
             if(userName!=null) {
@@ -126,16 +125,16 @@ public class CONNECT implements Command {
             }
             os.writeByte(flags);
             os.writeShort(keepAlive);
-            CommandSupport.writeUTF(os, clientId);
+            MessageSupport.writeUTF(os, clientId);
             if(willTopic!=null && willMessage!=null) {
-                CommandSupport.writeUTF(os, willTopic);
-                CommandSupport.writeUTF(os, willMessage);
+                MessageSupport.writeUTF(os, willTopic);
+                MessageSupport.writeUTF(os, willMessage);
             }
             if(userName!=null) {
-                CommandSupport.writeUTF(os, userName);
+                MessageSupport.writeUTF(os, userName);
             }
             if(password!=null) {
-                CommandSupport.writeUTF(os, password);
+                MessageSupport.writeUTF(os, password);
             }
 
             MQTTFrame frame = new MQTTFrame();
@@ -146,76 +145,94 @@ public class CONNECT implements Command {
         }
     }
 
-    public boolean isCleanSession() {
+    public boolean cleanSession() {
         return cleanSession;
     }
 
-    public void setCleanSession(boolean cleanSession) {
+    public CONNECT cleanSession(boolean cleanSession) {
         this.cleanSession = cleanSession;
+        return this;
     }
 
-    public UTF8Buffer getClientId() {
+    public UTF8Buffer clientId() {
         return clientId;
     }
 
-    public void setClientId(UTF8Buffer clientId) {
+    public CONNECT clientId(UTF8Buffer clientId) {
         this.clientId = clientId;
+        return this;
     }
 
-    public short getKeepAlive() {
+    public short keepAlive() {
         return keepAlive;
     }
 
-    public void setKeepAlive(short keepAlive) {
+    public CONNECT keepAlive(short keepAlive) {
         this.keepAlive = keepAlive;
+        return this;
     }
 
-    public UTF8Buffer getPassword() {
+    public UTF8Buffer password() {
         return password;
     }
 
-    public void setPassword(UTF8Buffer password) {
+    public CONNECT password(UTF8Buffer password) {
         this.password = password;
+        return this;
     }
 
-    public UTF8Buffer getUserName() {
+    public UTF8Buffer userName() {
         return userName;
     }
 
-    public void setUserName(UTF8Buffer userName) {
+    public CONNECT userName(UTF8Buffer userName) {
         this.userName = userName;
+        return this;
     }
 
-    public UTF8Buffer getWillMessage() {
+    public UTF8Buffer willMessage() {
         return willMessage;
     }
 
-    public void setWillMessage(UTF8Buffer willMessage) {
+    public CONNECT willMessage(UTF8Buffer willMessage) {
         this.willMessage = willMessage;
+        return this;
     }
 
-    public byte getWillQos() {
-        return willQos;
+    public QoS willQos() {
+        return QoS.values()[willQos];
     }
 
-    public void setWillQos(byte willQos) {
-        this.willQos = willQos;
+    public CONNECT willQos(QoS willQos) {
+        this.willQos = (byte) willQos.ordinal();
+        return this;
     }
 
-    public boolean isWillRetain() {
+    public boolean willRetain() {
         return willRetain;
     }
 
-    public void setWillRetain(boolean willRetain) {
+    public CONNECT willRetain(boolean willRetain) {
         this.willRetain = willRetain;
+        return this;
     }
 
-    public UTF8Buffer getWillTopic() {
+    public UTF8Buffer willTopic() {
         return willTopic;
     }
 
-    public void setWillTopic(UTF8Buffer willTopic) {
+    public CONNECT willTopic(UTF8Buffer willTopic) {
         this.willTopic = willTopic;
+        return this;
+    }
+
+    public int version() {
+        return version;
+    }
+
+    public CONNECT version(int version) {
+        this.version = version;
+        return this;
     }
 
     @Override

@@ -27,7 +27,7 @@ import org.fusesource.mqtt.client.QoS;
 *
 * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
 */
-public class MQTTFrame extends CommandSupport.HeaderBase {
+public class MQTTFrame extends MessageSupport.HeaderBase {
 
     private static final Buffer[] NO_BUFFERS = new Buffer[0];
 
@@ -66,8 +66,8 @@ public class MQTTFrame extends CommandSupport.HeaderBase {
     }
 
     @Override
-    public byte commandType() {
-        return super.commandType();
+    public byte messageType() {
+        return super.messageType();
     }
 
     @Override

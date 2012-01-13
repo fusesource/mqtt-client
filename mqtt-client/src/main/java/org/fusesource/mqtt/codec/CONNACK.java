@@ -22,7 +22,7 @@ import org.fusesource.hawtbuf.*;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -30,7 +30,7 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class CONNACK implements Command {
+public class CONNACK implements Message {
 
     public static final byte TYPE = 2;
 
@@ -45,7 +45,7 @@ public class CONNACK implements Command {
 
     private Code code = Code.CONNECTION_ACCEPTED;
     
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 

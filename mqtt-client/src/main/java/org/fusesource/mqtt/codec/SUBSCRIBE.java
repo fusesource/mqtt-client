@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -35,7 +35,7 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class SUBSCRIBE extends CommandSupport.HeaderBase implements Command, Acked {
+public class SUBSCRIBE extends MessageSupport.HeaderBase implements Message, Acked {
 
     public static final byte TYPE = 8;
     public static final Topic[] NO_TOPICS = new Topic[0];
@@ -47,7 +47,7 @@ public class SUBSCRIBE extends CommandSupport.HeaderBase implements Command, Ack
         qos(QoS.AT_LEAST_ONCE);
     }
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 
@@ -62,7 +62,7 @@ public class SUBSCRIBE extends CommandSupport.HeaderBase implements Command, Ack
         }
         ArrayList<Topic> list = new ArrayList<Topic>();
         while(is.available() > 0) {
-            Topic topic = new Topic(CommandSupport.readUTF(is), QoS.values()[is.readByte()]);
+            Topic topic = new Topic(MessageSupport.readUTF(is), QoS.values()[is.readByte()]);
             list.add(topic);
         }
         topics = list.toArray(new Topic[list.size()]);
@@ -77,7 +77,7 @@ public class SUBSCRIBE extends CommandSupport.HeaderBase implements Command, Ack
                 os.writeShort(messageId);
             }
             for(Topic topic: topics) {
-                CommandSupport.writeUTF(os, topic.name());
+                MessageSupport.writeUTF(os, topic.name());
                 os.writeByte(topic.qos().ordinal());
             }
 

@@ -45,7 +45,7 @@
     <junit-version>4.7</junit-version>
     <slf4j-version>1.6.1</slf4j-version>
     <hawtbuf-version>1.8</hawtbuf-version>
-    <hawtdispatch-version>1.6</hawtdispatch-version>
+    <hawtdispatch-version>1.7-SNAPSHOT</hawtdispatch-version>
     <mvnplugins-version>1.15</mvnplugins-version>
   </properties>
   

@@ -19,7 +19,7 @@
 package org.fusesource.mqtt.codec;
 
 import java.net.ProtocolException;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -27,11 +27,11 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class PUBCOMP extends CommandSupport.AckBase implements Command {
+public class PUBCOMP extends MessageSupport.AckBase implements Message {
 
     public static final byte TYPE = 7;
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 

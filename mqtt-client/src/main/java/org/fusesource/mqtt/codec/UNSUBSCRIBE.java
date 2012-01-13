@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -35,7 +35,7 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class UNSUBSCRIBE extends CommandSupport.HeaderBase implements Command, Acked {
+public class UNSUBSCRIBE extends MessageSupport.HeaderBase implements Message, Acked {
 
     public static final byte TYPE = 10;
     public static final UTF8Buffer[] NO_TOPICS = new UTF8Buffer[0];
@@ -47,7 +47,7 @@ public class UNSUBSCRIBE extends CommandSupport.HeaderBase implements Command, A
         qos(QoS.AT_LEAST_ONCE);
     }
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 
@@ -63,7 +63,7 @@ public class UNSUBSCRIBE extends CommandSupport.HeaderBase implements Command, A
         }
         ArrayList<UTF8Buffer> list = new ArrayList<UTF8Buffer>();
         while(is.available() > 0) {
-            list.add(CommandSupport.readUTF(is));
+            list.add(MessageSupport.readUTF(is));
         }
         topics = list.toArray(new UTF8Buffer[list.size()]);
         return this;
@@ -77,7 +77,7 @@ public class UNSUBSCRIBE extends CommandSupport.HeaderBase implements Command, A
                 os.writeShort(messageId);
             }
             for(UTF8Buffer topic: topics) {
-                CommandSupport.writeUTF(os, topic);
+                MessageSupport.writeUTF(os, topic);
             }
 
             MQTTFrame frame = new MQTTFrame();

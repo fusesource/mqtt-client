@@ -19,7 +19,7 @@
 package org.fusesource.mqtt.codec;
 
 import java.net.ProtocolException;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -27,11 +27,11 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class PINGREQ extends CommandSupport.EmptyBase implements Command {
+public class PINGREQ extends MessageSupport.EmptyBase implements Message {
 
     public static final byte TYPE = 12;
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 

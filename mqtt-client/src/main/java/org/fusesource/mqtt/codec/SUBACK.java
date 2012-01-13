@@ -24,7 +24,7 @@ import org.fusesource.hawtbuf.DataByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Arrays;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -32,7 +32,7 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class SUBACK implements Command {
+public class SUBACK implements Message {
 
     public static final byte[] NO_GRANTED_QOS = new byte[0];
     public static final byte TYPE = 9;
@@ -40,7 +40,7 @@ public class SUBACK implements Command {
     private short messageId;
     private byte grantedQos[] = NO_GRANTED_QOS;
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 

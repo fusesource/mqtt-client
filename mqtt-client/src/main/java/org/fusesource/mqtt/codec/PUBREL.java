@@ -24,7 +24,7 @@ import org.fusesource.mqtt.client.QoS;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -32,13 +32,13 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class PUBREL extends CommandSupport.HeaderBase implements Command, Acked {
+public class PUBREL extends MessageSupport.HeaderBase implements Message, Acked {
 
     public static final byte TYPE = 6;
 
     private short messageId;
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
     

@@ -20,8 +20,8 @@ package org.fusesource.mqtt.codec;
 
 import java.net.ProtocolException;
 
-import static org.fusesource.mqtt.codec.CommandSupport.AckBase;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.AckBase;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -29,11 +29,11 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class UNSUBACK extends AckBase implements Command {
+public class UNSUBACK extends AckBase implements Message {
 
     public static final byte TYPE = 11;
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 

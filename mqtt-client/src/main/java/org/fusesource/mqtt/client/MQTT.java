@@ -118,6 +118,11 @@ public class MQTT {
         this.sendBufferSize = other.sendBufferSize;
         this.useLocalHost = other.useLocalHost;
         this.connect = new CONNECT(other.connect);
+        this.reconnectDelay = other.reconnectDelay;
+        this.reconnectDelayMax = other.reconnectDelayMax;
+        this.reconnectBackOffMultiplier = other.reconnectBackOffMultiplier;
+        this.reconnectAttemptsMax = other.reconnectAttemptsMax;
+        this.connectAttemptsMax = other.connectAttemptsMax;
     }
 
     public CallbackConnection callbackConnection() {
@@ -131,94 +136,94 @@ public class MQTT {
     }
 
     public UTF8Buffer getClientId() {
-        return connect.getClientId();
+        return connect.clientId();
     }
 
     public short getKeepAlive() {
-        return connect.getKeepAlive();
+        return connect.keepAlive();
     }
 
     public UTF8Buffer getPassword() {
-        return connect.getPassword();
+        return connect.password();
     }
 
     public byte getType() {
-        return connect.getType();
+        return connect.messageType();
     }
 
     public UTF8Buffer getUserName() {
-        return connect.getUserName();
+        return connect.userName();
     }
 
     public UTF8Buffer getWillMessage() {
-        return connect.getWillMessage();
+        return connect.willMessage();
     }
 
     public QoS getWillQos() {
-        return QoS.values()[connect.getWillQos()];
+        return connect.willQos();
     }
 
     public UTF8Buffer getWillTopic() {
-        return connect.getWillTopic();
+        return connect.willTopic();
     }
 
     public boolean isCleanSession() {
-        return connect.isCleanSession();
+        return connect.cleanSession();
     }
 
     public boolean isWillRetain() {
-        return connect.isWillRetain();
+        return connect.willRetain();
     }
 
     public void setCleanSession(boolean cleanSession) {
-        connect.setCleanSession(cleanSession);
+        connect.cleanSession(cleanSession);
     }
 
     public void setClientId(String clientId) {
         this.setClientId(utf8(clientId));
     }
     public void setClientId(UTF8Buffer clientId) {
-        connect.setClientId(clientId);
+        connect.clientId(clientId);
     }
 
     public void setKeepAlive(short keepAlive) {
-        connect.setKeepAlive(keepAlive);
+        connect.keepAlive(keepAlive);
     }
 
     public void setPassword(String password) {
         this.setPassword(utf8(password));
     }
     public void setPassword(UTF8Buffer password) {
-        connect.setPassword(password);
+        connect.password(password);
     }
 
     public void setUserName(String password) {
         this.setUserName(utf8(password));
     }
     public void setUserName(UTF8Buffer userName) {
-        connect.setUserName(userName);
+        connect.userName(userName);
     }
 
     public void setWillMessage(String willMessage) {
-        connect.setWillMessage(utf8(willMessage));
+        connect.willMessage(utf8(willMessage));
     }
     public void setWillMessage(UTF8Buffer willMessage) {
-        connect.setWillMessage(willMessage);
+        connect.willMessage(willMessage);
     }
 
     public void setWillQos(QoS willQos) {
-        connect.setWillQos((byte) willQos.ordinal());
+        connect.willQos(willQos);
     }
 
     public void setWillRetain(boolean willRetain) {
-        connect.setWillRetain(willRetain);
+        connect.willRetain(willRetain);
     }
 
     public void setWillTopic(String password) {
         this.setWillTopic(utf8(password));
     }
     public void setWillTopic(UTF8Buffer willTopic) {
-        connect.setWillTopic(willTopic);
+        connect.willTopic(willTopic);
     }
 
     public Executor getBlockingExecutor() {

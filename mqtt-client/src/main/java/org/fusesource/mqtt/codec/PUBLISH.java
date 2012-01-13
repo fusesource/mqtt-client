@@ -26,7 +26,7 @@ import org.fusesource.mqtt.client.QoS;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import static org.fusesource.mqtt.codec.CommandSupport.*;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
 
 /**
  * <p>
@@ -34,7 +34,7 @@ import static org.fusesource.mqtt.codec.CommandSupport.*;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class PUBLISH extends CommandSupport.HeaderBase implements Command, Acked {
+public class PUBLISH extends MessageSupport.HeaderBase implements Message, Acked {
 
     public static final byte TYPE = 3;
 
@@ -46,7 +46,7 @@ public class PUBLISH extends CommandSupport.HeaderBase implements Command, Acked
         qos(QoS.AT_LEAST_ONCE);
     }
 
-    public byte getType() {
+    public byte messageType() {
         return TYPE;
     }
 
@@ -55,7 +55,7 @@ public class PUBLISH extends CommandSupport.HeaderBase implements Command, Acked
         header(frame.header());
 
         DataByteArrayInputStream is = new DataByteArrayInputStream(frame.buffers[0]);
-        topicName = CommandSupport.readUTF(is);
+        topicName = MessageSupport.readUTF(is);
         
         QoS qos = qos();
         if(qos != QoS.AT_MOST_ONCE) {
@@ -68,7 +68,7 @@ public class PUBLISH extends CommandSupport.HeaderBase implements Command, Acked
     public MQTTFrame encode() {
         try {
             DataByteArrayOutputStream variableHeader = new DataByteArrayOutputStream();
-            CommandSupport.writeUTF(variableHeader, topicName);
+            MessageSupport.writeUTF(variableHeader, topicName);
             QoS qos = qos();
             if(qos != QoS.AT_MOST_ONCE) {
                 variableHeader.writeShort(messageId);
@@ -130,7 +130,7 @@ public class PUBLISH extends CommandSupport.HeaderBase implements Command, Acked
         return payload;
     }
 
-    public PUBLISH setPayload(Buffer payload) {
+    public PUBLISH payload(Buffer payload) {
         this.payload = payload;
         return this;
     }
