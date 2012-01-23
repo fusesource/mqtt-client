@@ -39,17 +39,7 @@
       of the mqtt-client uber jar file.
   </description>
   
-  <properties>
-    <retrotranslator.verify>true</retrotranslator.verify>
-  </properties>
-
   <dependencies>
-
-    <dependency>
-      <groupId>net.sf.retrotranslator</groupId>
-      <artifactId>retrotranslator-runtime</artifactId>
-      <version>1.2.9</version>
-    </dependency>
 
     <dependency>
       <groupId>org.osgi</groupId>
@@ -57,7 +47,6 @@
       <version>${osgi-version}</version>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>org.osgi</groupId>
       <artifactId>org.osgi.compendium</artifactId>
@@ -97,8 +86,22 @@
                   <type>jar</type>
                   <overWrite>true</overWrite>
                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                  <!-- <includes>**/*.class,**/*.xml</includes>
-                  <excludes>**/*test.class</excludes> -->
+                </artifactItem>
+                <artifactItem>
+                  <groupId>net.sf.retrotranslator</groupId>
+                  <artifactId>retrotranslator-runtime</artifactId>
+                  <version>1.2.9</version>
+                  <type>jar</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                </artifactItem>
+                <artifactItem>            
+                  <groupId>backport-util-concurrent</groupId>
+                  <artifactId>backport-util-concurrent</artifactId>
+                  <version>3.1</version>
+                  <type>jar</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/classes</outputDirectory>
                 </artifactItem>
               </artifactItems>              
               <overWriteReleases>true</overWriteReleases>
@@ -128,12 +131,20 @@
                 </fileset>
               </filesets>
               <advanced>true</advanced>
+              <verify>false</verify>
               <verifyClasspath>
                 <element>${java14.rt.jar}</element>
               </verifyClasspath> 
             </configuration>
           </execution>
         </executions>
+  	     <dependencies>
+    	    <dependency>
+            <groupId>net.sf.retrotranslator</groupId>
+      		<artifactId>retrotranslator-transformer</artifactId>
+      		<version>1.2.9</version>
+          </dependency>
+  	     </dependencies>
       </plugin>
       
       <plugin>
@@ -152,28 +163,9 @@
           <injar>${project.build.finalName}.jar</injar>
           <outjar>${project.build.finalName}.jar</outjar>          
           <libs>
-            <lib>${java14.rt.jar}</lib>
-            <!-- <lib>${jsse.jar.path}</lib> -->
+            <lib>${rt.jar.path}</lib>
+            <lib>${jsse.jar.path}</lib>
           </libs>
-          <exclusions>
-            <exclusion>
-              <groupId>org.fusesource.mqtt-client</groupId>
-              <artifactId>mqtt-client</artifactId>
-              <classifier>uber</classifier>
-            </exclusion>
-          </exclusions>
-          <assembly>
-            <inclusions>
-              <inclusion>
-                <groupId>net.sf.retrotranslator</groupId>
-                <artifactId>retrotranslator-runtime</artifactId>
-              </inclusion>
-              <inclusion>
-                <groupId>backport-util-concurrent</groupId>
-                <artifactId>backport-util-concurrent</artifactId>
-              </inclusion>
-            </inclusions>
-          </assembly>
           <obfuscate>false</obfuscate>
           <options>
             <option>-keep class org.fusesource.mqtt.**</option>
