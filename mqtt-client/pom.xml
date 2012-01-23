@@ -35,7 +35,11 @@
   
   <name>${project.artifactId}</name>
   <description>
-        STOMP-JMS is a JMS implementation using STOMP as the wire protocol
+     mqtt-client provides an ASL 2.0 licensed API to MQTT. It takes care of 
+     automatically reconnecting to your MQTT server and restoring your client 
+     session if any network failures occur. Applications can use a blocking 
+     API style, a futures based API, or a callback/continuations passing API 
+     style.
   </description>
   
   <properties>
