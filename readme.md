@@ -32,10 +32,18 @@ Add the following to your maven `pom.xml` file.
 
 ## Using from any Other Build System
 
-Download the uber 
-[jar file](http://repo.fusesource.com/nexus/service/local/artifact/maven/redirect?r=snapshots&g=org.fusesource.mqtt-client&a=mqtt-client&v=1.0-SNAPSHOT&e=jar&c=uber) 
+Download the 
+[uber jar file](http://repo.fusesource.com/nexus/service/local/artifact/maven/redirect?r=snapshots&g=org.fusesource.mqtt-client&a=mqtt-client&v=1.0-SNAPSHOT&e=jar&c=uber) 
 and add it to your build. The uber contains all the stripped down dependencies
 which the mqtt-client depends on from other projects.
+
+## Using on Java 1.4 
+
+We also provide an 
+[java 1.4 uber jar file](http://repo.fusesource.com/nexus/service/local/artifact/maven/redirect?r=snapshots&g=org.fusesource.mqtt-client&a=mqtt-client-java1.4-uber&v=1.0-SNAPSHOT&e=jar) 
+which is compatible with Java 1.4 JVMs.  This version of the jar
+does not support SSL connections since the SSLEngine class used to implement SSL on NIO
+was not introduced until Java 1.5.
 
 ## Configuring the MQTT Connection
 
