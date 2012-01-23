@@ -39,18 +39,36 @@
       of the mqtt-client uber jar file.
   </description>
   
+  <properties>
+    <retrotranslator.verify>true</retrotranslator.verify>
+  </properties>
+
   <dependencies>
 
-    <dependency>
-      <groupId>org.fusesource.mqtt-client</groupId>
-      <artifactId>mqtt-client</artifactId>
-      <version>1.0-SNAPSHOT</version>
-      <classifier>uber</classifier>
-    </dependency>
     <dependency>
       <groupId>net.sf.retrotranslator</groupId>
       <artifactId>retrotranslator-runtime</artifactId>
       <version>1.2.9</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.core</artifactId>
+      <version>${osgi-version}</version>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.compendium</artifactId>
+      <version>${osgi-version}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm-tree</artifactId>
+      <version>${asm-version}</version>
+      <optional>true</optional>
     </dependency>
 
   </dependencies>
@@ -67,12 +85,22 @@
             <id>unpack</id>
             <phase>process-resources</phase>
             <goals>
-              <goal>unpack-dependencies</goal>
+              <goal>unpack</goal>
             </goals>
             <configuration>
-              <includes>**/*</includes>
-              <!-- <excludes>**/*.properties</excludes> -->
-              <outputDirectory>${project.build.directory}/classes</outputDirectory>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.fusesource.mqtt-client</groupId>
+                  <artifactId>mqtt-client</artifactId>
+                  <version>${project.version}</version>
+                  <classifier>uber</classifier>
+                  <type>jar</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                  <!-- <includes>**/*.class,**/*.xml</includes>
+                  <excludes>**/*test.class</excludes> -->
+                </artifactItem>
+              </artifactItems>              
               <overWriteReleases>true</overWriteReleases>
               <overWriteSnapshots>true</overWriteSnapshots>
             </configuration>
@@ -100,15 +128,71 @@
                 </fileset>
               </filesets>
               <advanced>true</advanced>
-              <!--
               <verifyClasspath>
-                <element>${path.to.rt.jar}</element>
+                <element>${java14.rt.jar}</element>
               </verifyClasspath> 
-              -->
             </configuration>
           </execution>
         </executions>
       </plugin>
+      
+      <plugin>
+        <groupId>com.pyx4me</groupId>
+        <artifactId>proguard-maven-plugin</artifactId>
+        <version>2.0.4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>proguard</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <injar>${project.build.finalName}.jar</injar>
+          <outjar>${project.build.finalName}.jar</outjar>          
+          <libs>
+            <lib>${java14.rt.jar}</lib>
+            <!-- <lib>${jsse.jar.path}</lib> -->
+          </libs>
+          <exclusions>
+            <exclusion>
+              <groupId>org.fusesource.mqtt-client</groupId>
+              <artifactId>mqtt-client</artifactId>
+              <classifier>uber</classifier>
+            </exclusion>
+          </exclusions>
+          <assembly>
+            <inclusions>
+              <inclusion>
+                <groupId>net.sf.retrotranslator</groupId>
+                <artifactId>retrotranslator-runtime</artifactId>
+              </inclusion>
+              <inclusion>
+                <groupId>backport-util-concurrent</groupId>
+                <artifactId>backport-util-concurrent</artifactId>
+              </inclusion>
+            </inclusions>
+          </assembly>
+          <obfuscate>false</obfuscate>
+          <options>
+            <option>-keep class org.fusesource.mqtt.**</option>
+            <option>-keep class org.fusesource.mqtt.** {
+              public static void main(java.lang.String[]);
+            }</option>
+            <option>-dontoptimize</option>
+          </options>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>net.sf.proguard</groupId>
+            <artifactId>proguard</artifactId>
+            <version>4.4</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>        
+      </plugin>
+      
     </plugins>
   </build>
   

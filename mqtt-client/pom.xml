@@ -42,11 +42,6 @@
      style.
   </description>
   
-  <properties>
-    <osgi-version>4.2.0</osgi-version>
-    <asm-version>3.1</asm-version>
-  </properties>
-
   <dependencies>
 
     <dependency>
@@ -158,30 +153,4 @@
     </plugins>
   </build>
   
-  <profiles>
-    <profile>
-      <id>unix</id>
-      <activation><os><family>unix</family></os></activation>
-      <properties>
-        <rt.jar.path>${java.home}/lib/rt.jar</rt.jar.path>
-        <jsse.jar.path>${java.home}/lib/jsse.jar</jsse.jar.path>
-      </properties>
-    </profile>
-    <profile>
-      <id>mac</id>
-      <activation><os><family>mac</family></os></activation>
-      <properties>
-        <rt.jar.path>${java.home}/../Classes/classes.jar</rt.jar.path>
-        <jsse.jar.path>${java.home}/../Classes/jsse.jar</jsse.jar.path>
-      </properties>
-    </profile>
-    <profile>
-      <id>windows</id>
-      <activation><os><family>windows</family></os></activation>
-      <properties>
-        <rt.jar.path>${java.home}/jre/lib/rt.jar</rt.jar.path>
-        <jsse.jar.path>${java.home}/jre/lib/jsse.jar</jsse.jar.path>
-      </properties>
-    </profile>
-  </profiles>
 </project>
