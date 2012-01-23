@@ -47,6 +47,11 @@
       <version>1.0-SNAPSHOT</version>
       <classifier>uber</classifier>
     </dependency>
+    <dependency>
+      <groupId>net.sf.retrotranslator</groupId>
+      <artifactId>retrotranslator-runtime</artifactId>
+      <version>1.2.9</version>
+    </dependency>
 
   </dependencies>
 
@@ -94,6 +99,12 @@
                   </includes>
                 </fileset>
               </filesets>
+              <advanced>true</advanced>
+              <!--
+              <verifyClasspath>
+                <element>${path.to.rt.jar}</element>
+              </verifyClasspath> 
+              -->
             </configuration>
           </execution>
         </executions>
