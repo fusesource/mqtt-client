@@ -239,7 +239,7 @@ Example:
         public void onConnected() {
         }
 
-        public void onSuccess(UTF8Buffer topic, Buffer payload, Runnable ack) {
+        public void onPublish(UTF8Buffer topic, Buffer payload, Runnable ack) {
             // You can now process a received message from a topic.
             // Once process execute the ack runnable.
             ack.run();
