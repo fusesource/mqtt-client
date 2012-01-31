@@ -294,11 +294,11 @@ which it uses to process IO events for the socket. The dispatch queue is an Exec
 provides serial execution of IO and processing events and is used to ensure synchronized
 access of connection.
 
-The callbacks will be executing the the the dispatch queue associated with the connection so
+The callbacks will be executing the dispatch queue associated with the connection so
 it safe to use the connection from the callback but you MUST NOT perform any blocking
 operations within the callback. If you need to perform some processing which MAY block, you
 must send it to another thread pool for processing. Furthermore, if another thread needs to
-interact with the connection it can only doit by using a Runnable submitted to the
+interact with the connection it can only do it by using a Runnable submitted to the
 connection's dispatch queue.
 
 Example of executing a Runnable on the connection's dispatch queue:
