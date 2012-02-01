@@ -259,7 +259,7 @@ public class CallbackConnection {
             }
 
             private void onFailure(final Throwable error) {
-                if(!transport.isDisposed()) {
+                if(!transport.isClosed()) {
                     transport.stop(new Runnable() {
                         public void run() {
                             onConnect.onFailure(error);
@@ -356,11 +356,10 @@ public class CallbackConnection {
         if( suspendCount.get() > 0 ) {
             this.transport.suspendRead();
         }
-        this.transport.setTransportListener(new TransportListener() {
+        this.transport.setTransportListener(new DefaultTransportListener() {
             public void onTransportCommand(Object command) {
                 processFrame((MQTTFrame) command);
             }
-
             public void onRefill() {
                 onRefillCalled =true;
                 drainOverflow();
@@ -368,12 +367,6 @@ public class CallbackConnection {
 
             public void onTransportFailure(IOException error) {
                 handleSessionFailure(error);
-            }
-
-            public void onTransportConnected() {
-            }
-
-            public void onTransportDisconnected(boolean reconnecting) {
             }
         });
         pingedAt = 0;
