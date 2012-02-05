@@ -115,6 +115,24 @@ public class FutureConnection {
         });
         return future;
     }
+    
+    public Future<Void> unsubscribe(final String[] topics) {
+        UTF8Buffer[] buffers = new UTF8Buffer[topics.length];
+        for (int i = 0; i < buffers.length; i++) {
+            buffers[i] = new UTF8Buffer(topics[i]);
+        }
+        return unsubscribe(buffers);
+    }
+
+    public Future<Void> unsubscribe(final UTF8Buffer[] topics) {
+        final Promise<Void> future = new Promise<Void>();
+        next.getDispatchQueue().execute(new Runnable() {
+            public void run() {
+                next.unsubscribe(topics, future);
+            }
+        });
+        return future;
+    }
 
     public Future<Void> publish(final String topic, final byte[] payload, final QoS qos, final boolean retain) {
         return publish(utf8(topic), new Buffer(payload), qos, retain);

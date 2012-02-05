@@ -87,8 +87,8 @@ public class SUBACK implements Message {
     @Override
     public String toString() {
         return "SUBACK{" +
-                "grantedQos=" + grantedQos +
-                ", messageId=" + Arrays.asList(messageId) +
+                "grantedQos=" + Arrays.toString(grantedQos) +
+                ", messageId=" +messageId +
                 '}';
     }
 }

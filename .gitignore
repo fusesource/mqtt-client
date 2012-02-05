@@ -27,3 +27,9 @@ target
 # OS Stuff
 *.swp
 .DS_Store
+
+mqtt-client/dump.txt
+mqtt-client/in/
+mqtt-client/lib/
+mqtt-client/usage.txt
+

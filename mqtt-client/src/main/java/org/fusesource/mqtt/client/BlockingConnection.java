@@ -57,6 +57,14 @@ public class BlockingConnection {
         return this.next.subscribe(topics).await();
     }
 
+    public void unsubscribe(final String[] topics) throws Exception {
+        this.next.unsubscribe(topics).await();
+    }
+
+    public void unsubscribe(final UTF8Buffer[] topics) throws Exception {
+        this.next.unsubscribe(topics).await();
+    }
+
     public void publish(final UTF8Buffer topic, final Buffer payload, final QoS qos, final boolean retain) throws Exception {
         this.next.publish(topic, payload, qos, retain).await();
     }
