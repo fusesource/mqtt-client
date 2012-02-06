@@ -62,6 +62,9 @@ public class PUBLISH extends MessageSupport.HeaderBase implements Message, Acked
             messageId = is.readShort();
         }
         payload = is.readBuffer(is.available());
+        if( payload == null ) {
+            payload = new Buffer(0);
+        }
         return this;
     }
     
