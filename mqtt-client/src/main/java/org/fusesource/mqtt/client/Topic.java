@@ -47,4 +47,31 @@ public class Topic {
     public QoS qos() {
         return qos;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Topic)) return false;
+
+        Topic topic = (Topic) o;
+
+        if (name != null ? !name.equals(topic.name) : topic.name != null) return false;
+        if (qos != topic.qos) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (qos != null ? qos.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "{ name=" + name +
+                ", qos=" + qos +
+                " }";
+    }
 }
