@@ -126,6 +126,9 @@ public class MQTT {
     }
 
     public CallbackConnection callbackConnection() {
+        if( !isCleanSession() && getClientId()==null ) {
+            throw new IllegalArgumentException("The client id MUST be configured when clean session is set to false");
+        }
         return new CallbackConnection(new MQTT(this));
     }
     public FutureConnection futureConnection() {
