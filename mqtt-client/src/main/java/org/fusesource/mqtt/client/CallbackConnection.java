@@ -563,31 +563,31 @@ public class CallbackConnection {
     }
 
     private void send(Acked command, Callback cb) {
-        if( failure !=null ) {
-            if( cb!=null ) {
-                cb.onFailure(failure);
-            }
-        } else {
-            short id = 0;
-            if(command.qos() != QoS.AT_MOST_ONCE) {
-                id = getNextMessageId();
-                command.messageId(id);
-            }
-            send(new Request(id, command.encode(), cb));
+        short id = 0;
+        if(command.qos() != QoS.AT_MOST_ONCE) {
+            id = getNextMessageId();
+            command.messageId(id);
         }
+        send(new Request(id, command.encode(), cb));
     }
 
     private void send(Request request) {
-        if( overflow.isEmpty() && transport!=null && transport.offer(request.frame) ) {
-            if(request.id==0) {
-                if( request.cb!=null ) {
-                    ((Callback<Void>)request.cb).onSuccess(null);
-                }
-            } else {
-                this.requests.put(request.id, request);
+        if( failure !=null ) {
+            if( request.cb!=null ) {
+                request.cb.onFailure(failure);
             }
         } else {
-            overflow.addLast(request);
+            if( overflow.isEmpty() && transport!=null && transport.offer(request.frame) ) {
+                if(request.id==0) {
+                    if( request.cb!=null ) {
+                        ((Callback<Void>)request.cb).onSuccess(null);
+                    }
+                } else {
+                    this.requests.put(request.id, request);
+                }
+            } else {
+                overflow.addLast(request);
+            }
         }
     }
 
