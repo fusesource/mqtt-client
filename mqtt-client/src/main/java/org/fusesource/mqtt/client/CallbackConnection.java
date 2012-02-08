@@ -454,7 +454,9 @@ public class CallbackConnection {
 
     public void disconnect(final Callback<Void> onComplete) {
         if( disconnected ) {
-            onComplete.onSuccess(null);
+            if(onComplete!=null){
+                onComplete.onSuccess(null);
+            }
             return;
         }
 
@@ -540,7 +542,9 @@ public class CallbackConnection {
                     for (Topic topic : topics) {
                         activeSubs.put(topic.name(), topic.qos());
                     }
-                    next.onSuccess(value);
+                    if(next!=null) {
+                        next.onSuccess(value);
+                    }
                 }
             });
         }
@@ -557,7 +561,9 @@ public class CallbackConnection {
                 for (UTF8Buffer topic : topics) {
                     activeSubs.remove(topic);
                 }
-                next.onSuccess(value);
+                if(next!=null) {
+                    next.onSuccess(value);
+                }
             }
         });
     }

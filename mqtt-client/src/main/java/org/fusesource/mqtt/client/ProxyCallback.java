@@ -34,10 +34,14 @@ public class ProxyCallback<T> implements Callback<T> {
     }
 
     public void onSuccess(T value) {
-        next.onSuccess(value);
+        if( next!=null ) {
+            next.onSuccess(value);
+        }
     }
 
     public void onFailure(Throwable value) {
-        next.onFailure(value);
+        if( next!=null ) {
+            next.onFailure(value);
+        }
     }
 }
