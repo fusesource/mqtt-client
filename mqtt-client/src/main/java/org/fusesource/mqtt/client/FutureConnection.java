@@ -106,6 +106,16 @@ public class FutureConnection {
         return future;
     }
 
+    public Future<Void> kill() {
+        final Promise<Void> future = new Promise<Void>();
+        next.getDispatchQueue().execute(new Runnable() {
+            public void run() {
+                next.kill(future);
+            }
+        });
+        return future;
+    }
+
     public Future<byte[]> subscribe(final Topic[] topics) {
         final Promise<byte[]> future = new Promise<byte[]>();
         next.getDispatchQueue().execute(new Runnable() {

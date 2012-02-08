@@ -53,6 +53,10 @@ public class BlockingConnection {
         this.next.disconnect().await();
     }
 
+    public void kill() throws Exception {
+        this.next.kill().await();
+    }
+
     public byte[] subscribe(final Topic[] topics) throws Exception {
         return this.next.subscribe(topics).await();
     }

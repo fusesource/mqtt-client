@@ -513,6 +513,32 @@ public class CallbackConnection {
         }
     }
 
+    /**
+     * Kills the connection without a graceful disconnect.
+     * @param onComplete
+     */
+    public void kill(final Callback<Void> onComplete) {
+        if( disconnected ) {
+            if(onComplete!=null){
+                onComplete.onSuccess(null);
+            }
+            return;
+        }
+        disconnected = true;
+        if(heartBeatMonitor!=null) {
+            heartBeatMonitor.stop();
+            heartBeatMonitor = null;
+        }
+        transport.stop(new Runnable() {
+            public void run() {
+                listener.onDisconnected();
+                if (onComplete != null) {
+                    onComplete.onSuccess(null);
+                }
+            }
+        });
+    }
+
     public void publish(String topic, byte[] payload, QoS qos, boolean retain, Callback<Void> cb) {
         publish(utf8(topic), new Buffer(payload), qos, retain, cb);
     }
@@ -529,6 +555,9 @@ public class CallbackConnection {
     }
 
     public void subscribe(final Topic[] topics, Callback<byte[]> cb) {
+        if(topics==null) {
+            throw new IllegalArgumentException("topics must not be null");
+        }
         queue.assertExecuting();
         if( disconnected ) {
             cb.onFailure(createDisconnectedError());
