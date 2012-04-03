@@ -5,6 +5,7 @@ package org.fusesource.mqtt.cli;
 
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.hawtdispatch.Task;
 import org.fusesource.mqtt.client.*;
 
 import java.io.IOException;
@@ -153,7 +154,7 @@ public class Listener {
                 if(debug) {
                     stderr("Disconnecting the client.");
                 }
-                connection.getDispatchQueue().execute(new Runnable() {
+                connection.getDispatchQueue().execute(new Task() {
                     public void run() {
                         connection.disconnect(new Callback<Void>() {
                             public void onSuccess(Void value) {

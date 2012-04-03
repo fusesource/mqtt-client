@@ -21,7 +21,9 @@ package org.fusesource.mqtt.client;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.HexSupport;
 import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.hawtdispatch.Dispatch;
 import org.fusesource.hawtdispatch.DispatchQueue;
+import org.fusesource.hawtdispatch.Task;
 import org.fusesource.hawtdispatch.transport.*;
 import org.fusesource.mqtt.codec.MessageSupport.Acked;
 import org.fusesource.mqtt.codec.*;
@@ -127,7 +129,7 @@ public class CallbackConnection {
             final Transport t = transport;
             transport = null;
             if(t!=null) {
-                t.stop(new Runnable() {
+                t.stop(new Task() {
                     public void run() {
                         listener.onDisconnected();
                         try {
@@ -188,7 +190,7 @@ public class CallbackConnection {
         }
         reconnectDelay = Math.min(reconnectDelay, mqtt.reconnectDelayMax);
         reconnects += 1;
-        queue.executeAfter(reconnectDelay, TimeUnit.MILLISECONDS, new Runnable() {
+        queue.executeAfter(reconnectDelay, TimeUnit.MILLISECONDS, new Task() {
             public void run() {
                 if(disconnected) {
                     onConnect.onFailure(createDisconnectedError());
@@ -260,7 +262,7 @@ public class CallbackConnection {
 
             private void onFailure(final Throwable error) {
                 if(!transport.isClosed()) {
-                    transport.stop(new Runnable() {
+                    transport.stop(new Task() {
                         public void run() {
                             onConnect.onFailure(error);
                         }
@@ -297,7 +299,7 @@ public class CallbackConnection {
                                         onSessionEstablished(transport);
                                         cb.onSuccess(null);
                                         listener.onConnected();
-                                        queue.execute(new Runnable() {
+                                        queue.execute(new Task() {
                                             public void run() {
                                                 drainOverflow();
                                             }
@@ -375,14 +377,14 @@ public class CallbackConnection {
             heartBeatMonitor.setWriteInterval((mqtt.getKeepAlive() * 1000) / 2);
             heartBeatMonitor.setTransport(this.transport);
             heartBeatMonitor.suspendRead(); // to match the suspended state of the transport.
-            heartBeatMonitor.setOnKeepAlive(new Runnable() {
+            heartBeatMonitor.setOnKeepAlive(new Task() {
                 public void run() {
                     // Don't care if the offer is rejected, just means we have data outbound.
                     if(!disconnected && pingedAt==0 && CallbackConnection.this.transport.offer(new PINGREQ().encode())) {
                         final long now = System.currentTimeMillis();
                         final long suspends = suspendChanges.get();
                         pingedAt = now;
-                        queue.executeAfter(CallbackConnection.this.mqtt.getKeepAlive(), TimeUnit.SECONDS, new Runnable() {
+                        queue.executeAfter(CallbackConnection.this.mqtt.getKeepAlive(), TimeUnit.SECONDS, new Task() {
                             public void run() {
                                 if (now == pingedAt) {
                                     // if the connection remained suspend we will never get the ping response..
@@ -473,7 +475,7 @@ public class CallbackConnection {
                         heartBeatMonitor.stop();
                         heartBeatMonitor = null;
                     }
-                    transport.stop(new Runnable() {
+                    transport.stop(new Task() {
                         public void run() {
                             listener.onDisconnected();
                             if (onComplete != null) {
@@ -529,7 +531,7 @@ public class CallbackConnection {
             heartBeatMonitor.stop();
             heartBeatMonitor = null;
         }
-        transport.stop(new Runnable() {
+        transport.stop(new Task() {
             public void run() {
                 listener.onDisconnected();
                 if (onComplete != null) {
@@ -739,10 +741,7 @@ public class CallbackConnection {
         }
     }
 
-    static public final Runnable NOOP = new Runnable() {
-        public void run() {
-        }
-    };
+    static public final Task NOOP = Dispatch.NOOP;
 
     private void toReceiver(final PUBLISH publish) {
         if( listener !=null ) {

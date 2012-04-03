@@ -7,6 +7,7 @@ import org.fusesource.hawtbuf.AsciiBuffer;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.ByteArrayOutputStream;
 import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.hawtdispatch.Task;
 import org.fusesource.mqtt.client.*;
 
 import java.io.File;
@@ -186,7 +187,7 @@ public class Publisher {
             @Override
             public void run() {
                 setName("MQTT client shutdown");
-                connection.getDispatchQueue().execute(new Runnable() {
+                connection.getDispatchQueue().execute(new Task() {
                     public void run() {
                         connection.disconnect(new Callback<Void>() {
                             public void onSuccess(Void value) {
@@ -243,10 +244,10 @@ public class Publisher {
             }
         });
 
-        new Runnable() {
+        new Task() {
             long sent = 0;
             public void run() {
-                final Runnable publish = this;
+                final Task publish = this;
                 Buffer message  = body;
                 if(prefixCounter) {
                     long id = sent + 1;

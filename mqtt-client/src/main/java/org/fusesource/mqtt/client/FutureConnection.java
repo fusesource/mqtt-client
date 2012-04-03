@@ -21,6 +21,7 @@ package org.fusesource.mqtt.client;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.hawtdispatch.DispatchQueue;
+import org.fusesource.hawtdispatch.Task;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -88,7 +89,7 @@ public class FutureConnection {
 
     public Future<Void> connect() {
         final Promise<Void> future = new Promise<Void>();
-        next.getDispatchQueue().execute(new Runnable() {
+        next.getDispatchQueue().execute(new Task() {
             public void run() {
                 next.connect(future);
             }
@@ -98,7 +99,7 @@ public class FutureConnection {
 
     public Future<Void> disconnect() {
         final Promise<Void> future = new Promise<Void>();
-        next.getDispatchQueue().execute(new Runnable() {
+        next.getDispatchQueue().execute(new Task() {
             public void run() {
                 next.disconnect(future);
             }
@@ -108,7 +109,7 @@ public class FutureConnection {
 
     public Future<Void> kill() {
         final Promise<Void> future = new Promise<Void>();
-        next.getDispatchQueue().execute(new Runnable() {
+        next.getDispatchQueue().execute(new Task() {
             public void run() {
                 next.kill(future);
             }
@@ -118,7 +119,7 @@ public class FutureConnection {
 
     public Future<byte[]> subscribe(final Topic[] topics) {
         final Promise<byte[]> future = new Promise<byte[]>();
-        next.getDispatchQueue().execute(new Runnable() {
+        next.getDispatchQueue().execute(new Task() {
             public void run() {
                 next.subscribe(topics, future);
             }
@@ -136,7 +137,7 @@ public class FutureConnection {
 
     public Future<Void> unsubscribe(final UTF8Buffer[] topics) {
         final Promise<Void> future = new Promise<Void>();
-        next.getDispatchQueue().execute(new Runnable() {
+        next.getDispatchQueue().execute(new Task() {
             public void run() {
                 next.unsubscribe(topics, future);
             }
@@ -150,7 +151,7 @@ public class FutureConnection {
 
     public Future<Void> publish(final UTF8Buffer topic, final Buffer payload,  final QoS qos, final boolean retain) {
         final Promise<Void> future = new Promise<Void>();
-        next.getDispatchQueue().execute(new Runnable() {
+        next.getDispatchQueue().execute(new Task() {
             public void run() {
                 next.publish(topic, payload, qos, retain, future);
             }
@@ -160,7 +161,7 @@ public class FutureConnection {
 
     public Future<Message> receive() {
         final Promise<Message> future = new Promise<Message>();
-        getDispatchQueue().execute(new Runnable(){
+        getDispatchQueue().execute(new Task(){
             public void run() {
                 if( next.failure()!=null ) {
                     future.onFailure(next.failure());

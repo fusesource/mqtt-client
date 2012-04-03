@@ -21,6 +21,7 @@ package org.fusesource.mqtt.client;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.hawtdispatch.DispatchQueue;
+import org.fusesource.hawtdispatch.TaskWrapper;
 
 /**
  * <p>
@@ -70,7 +71,7 @@ public class Message {
 
     public void ack() {
         if(onComplete!=null) {
-            queue.execute(onComplete);
+            queue.execute(new TaskWrapper(onComplete));
             onComplete = null;
         }
     }
