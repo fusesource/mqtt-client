@@ -53,7 +53,10 @@
     <mvnplugins-version>1.15</mvnplugins-version>
     <osgi-version>4.2.0</osgi-version>
     <asm-version>3.1</asm-version>
-    
+
+    <apollo-version>1.2</apollo-version>
+    <apollo-mqtt-version>1.1</apollo-mqtt-version>
+
   </properties>
   
   <url>http://${forge-project-id}.fusesource.org/</url>

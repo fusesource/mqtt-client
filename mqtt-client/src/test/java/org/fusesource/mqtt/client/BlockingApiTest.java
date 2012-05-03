@@ -18,10 +18,6 @@
 
 package org.fusesource.mqtt.client;
 
-import junit.framework.TestCase;
-
-
-import static org.fusesource.hawtbuf.Buffer.ascii;
 import static org.fusesource.hawtbuf.Buffer.utf8;
 
 /**
@@ -30,11 +26,11 @@ import static org.fusesource.hawtbuf.Buffer.utf8;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class BlockingApiTest extends TestCase {
+public class BlockingApiTest extends BrokerTestSupport {
 
-    public void testCallbackInterface() throws Exception {
+    public void testInterface() throws Exception {
         MQTT mqtt = new MQTT();
-        mqtt.setHost("localhost", 1883 /* broker.port*/);
+        mqtt.setHost("localhost", port);
 
         BlockingConnection connection = mqtt.blockingConnection();
         connection.connect();

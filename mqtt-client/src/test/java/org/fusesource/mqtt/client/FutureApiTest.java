@@ -30,13 +30,13 @@ import static org.fusesource.hawtbuf.Buffer.utf8;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class FutureApiTest extends TestCase {
+public class FutureApiTest extends BrokerTestSupport {
 
-    public void testCallbackInterface() throws Exception {
+    public void testInterface() throws Exception {
         final Promise<Buffer> result = new Promise<Buffer>();
 
         MQTT mqtt = new MQTT();
-        mqtt.setHost("localhost", 1883 /* broker.port*/);
+        mqtt.setHost("localhost", port);
 
         FutureConnection connection = mqtt.futureConnection();
         Future<Void> f1 = connection.connect();

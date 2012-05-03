@@ -78,6 +78,44 @@
     
     <!-- Testing Dependencies -->
     <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>apollo-broker</artifactId>
+      <scope>test</scope>
+      <version>${apollo-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fusesource.fuse-extra</groupId>
+      <artifactId>fusemq-apollo-mqtt</artifactId>
+      <version>${apollo-mqtt-version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>apollo-leveldb</artifactId>
+      <version>${apollo-version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>apollo-leveldb</artifactId>
+      <version>${apollo-version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- to enable the webconsole in the apollo broker -->
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>apollo-web</artifactId>
+      <version>${apollo-version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty.aggregate</groupId>
+      <artifactId>jetty-all-server</artifactId>
+      <version>7.1.6.v20100715</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -89,6 +127,7 @@
       <version>${slf4j-version}</version>
       <scope>test</scope>
     </dependency>
+
     
   </dependencies>
 

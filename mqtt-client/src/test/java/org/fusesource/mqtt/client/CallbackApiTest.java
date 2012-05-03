@@ -29,25 +29,12 @@ import org.fusesource.hawtbuf.UTF8Buffer;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class CallbackApiTest extends TestCase {
-//    ApolloBroker broker = new ApolloBroker();
-//
-//    @Override
-//    protected void setUp() throws Exception {
-//        super.setUp();
-//        broker.start();
-//    }
-//
-//    @Override
-//    protected void tearDown() throws Exception {
-//        broker.stop();
-//        super.tearDown();
-//    }
+public class CallbackApiTest extends BrokerTestSupport {
 
-    public void testCallbackInterface() throws Exception {
+    public void testInterface() throws Exception {
         final Promise<Buffer> result = new Promise<Buffer>();
         MQTT mqtt = new MQTT();
-        mqtt.setHost("localhost", 1883 /* broker.port*/);
+        mqtt.setHost("localhost", port);
 
         final CallbackConnection connection = mqtt.callbackConnection();
 
