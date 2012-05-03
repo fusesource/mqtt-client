@@ -20,6 +20,7 @@ package org.fusesource.mqtt.codec;
 
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtdispatch.transport.AbstractProtocolCodec;
+import org.fusesource.hawtdispatch.util.BufferPools;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -32,7 +33,13 @@ import java.nio.ByteBuffer;
  */
 public class MQTTProtocolCodec extends AbstractProtocolCodec {
 
+    private static final BufferPools BUFFER_POOLS = new BufferPools();
+
     private int maxMessageLength = 1024*1024*100;
+
+    public MQTTProtocolCodec() {
+        this.bufferPools = BUFFER_POOLS;
+    }
 
     public int getMaxMessageLength() {
         return maxMessageLength;
