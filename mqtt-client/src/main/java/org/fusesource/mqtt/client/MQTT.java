@@ -200,8 +200,8 @@ public class MQTT {
         connect.password(password);
     }
 
-    public void setUserName(String password) {
-        this.setUserName(utf8(password));
+    public void setUserName(String userName) {
+        this.setUserName(utf8(userName));
     }
     public void setUserName(UTF8Buffer userName) {
         connect.userName(userName);
@@ -222,8 +222,8 @@ public class MQTT {
         connect.willRetain(willRetain);
     }
 
-    public void setWillTopic(String password) {
-        this.setWillTopic(utf8(password));
+    public void setWillTopic(String willTopic) {
+        this.setWillTopic(utf8(willTopic));
     }
     public void setWillTopic(UTF8Buffer willTopic) {
         connect.willTopic(willTopic);
