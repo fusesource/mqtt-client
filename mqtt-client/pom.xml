@@ -172,10 +172,7 @@
           </assembly>
           <obfuscate>false</obfuscate>
           <options>
-            <option>-keep class org.fusesource.mqtt.**</option>
-            <option>-keep class org.fusesource.mqtt.** {
-              public static void main(java.lang.String[]);
-            }</option>
+            <option>-keep class org.fusesource.mqtt.** { *; } </option>
             <option>-dontoptimize</option>
           </options>
         </configuration>
