@@ -172,8 +172,8 @@
           </assembly>
           <obfuscate>false</obfuscate>
           <options>
-            <option>-keep class org.fusesource.mqtt.** { *; } </option>
             <option>-dontoptimize</option>
+            <option>-keep class org.fusesource.mqtt.** { *; } </option>
           </options>
         </configuration>
         <dependencies>
