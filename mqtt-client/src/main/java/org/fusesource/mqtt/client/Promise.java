@@ -31,18 +31,49 @@ import java.util.concurrent.TimeoutException;
 public class Promise<T> implements Callback<T>, Future<T> {
 
     private final CountDownLatch latch = new CountDownLatch(1);
-
+    Callback<T> next;
     Throwable error;
     T value;
 
     public void onFailure(Throwable value) {
-        error = value;
-        latch.countDown();
+        Callback<T> callback = null;
+        synchronized(this)  {
+            error = value;
+            latch.countDown();
+            callback = next;
+        }
+        if( callback!=null ) {
+            callback.onFailure(value);
+        }
     }
 
     public void onSuccess(T value) {
-        this.value = value;
-        latch.countDown();
+        Callback<T> callback = null;
+        synchronized(this)  {
+            this.value = value;
+            latch.countDown();
+            callback = next;
+        }
+        if( callback!=null ) {
+            callback.onSuccess(value);
+        }
+    }
+
+    public void then(Callback<T> callback) {
+        boolean fire = false;
+        synchronized(this)  {
+            next = callback;
+            if( latch.getCount() == 0 ) {
+                fire = true;
+            }
+        }
+        if( fire ) {
+            if( error!=null ) {
+                callback.onFailure(error);
+            } else {
+                callback.onSuccess(value);
+            }
+        }
     }
 
     public T await(long amount, TimeUnit unit) throws Exception {
@@ -74,4 +105,5 @@ public class Promise<T> implements Callback<T>, Future<T> {
         }
         return value;
     }
+
 }
