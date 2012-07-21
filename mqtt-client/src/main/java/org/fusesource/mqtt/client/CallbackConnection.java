@@ -286,6 +286,8 @@ public class CallbackConnection {
             transport.setTransportListener(new DefaultTransportListener() {
                 @Override
                 public void onTransportFailure(IOException error) {
+                    transport.stop(NOOP);
+                    onFailure(error);
                 }
 
                 public void onTransportCommand(Object command) {
@@ -307,16 +309,19 @@ public class CallbackConnection {
                                         break;
                                     default:
                                         // Bad creds or something. No point in reconnecting.
+                                        transport.stop(NOOP);
                                         cb.onFailure(new IOException("Could not connect: " + connack.code()));
                                 }
                                 break;
                             default:
                                 // Naughty MQTT server? No point in reconnecting.
+                                transport.stop(NOOP);
                                 cb.onFailure(new IOException("Could not connect. Received unexpected command: " + response.messageType()));
 
                         }
                     } catch (ProtocolException e) {
                         // Naughty MQTT server? No point in reconnecting.
+                        transport.stop(NOOP);
                         cb.onFailure(e);
                     }
                 }
