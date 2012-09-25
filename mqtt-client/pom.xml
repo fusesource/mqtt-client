@@ -84,9 +84,9 @@
       <version>${apollo-version}</version>
     </dependency>
     <dependency>
-      <groupId>org.fusesource.fuse-extra</groupId>
-      <artifactId>fusemq-apollo-mqtt</artifactId>
-      <version>${apollo-mqtt-version}</version>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>apollo-mqtt</artifactId>
+      <version>${apollo-version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

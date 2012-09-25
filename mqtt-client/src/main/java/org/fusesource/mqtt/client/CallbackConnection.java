@@ -224,15 +224,15 @@ public class CallbackConnection {
                 mqtt.sslContext = SSLContext.getInstance(SslTransport.protocol(scheme));
             }
             ssl.setSSLContext(mqtt.sslContext);
-            if( mqtt.blockingExecutor == null ) {
-                mqtt.blockingExecutor = mqtt.getBlockingThreadPool();
-            }
-            ssl.setBlockingExecutor(mqtt.blockingExecutor);
             transport = ssl;
         } else {
             throw new Exception("Unsupported URI scheme '"+scheme+"'");
         }
 
+        if( mqtt.blockingExecutor == null ) {
+            mqtt.blockingExecutor = mqtt.getBlockingThreadPool();
+        }
+        transport.setBlockingExecutor(mqtt.blockingExecutor);
         transport.setDispatchQueue(queue);
         transport.setProtocolCodec(new MQTTProtocolCodec());
 
