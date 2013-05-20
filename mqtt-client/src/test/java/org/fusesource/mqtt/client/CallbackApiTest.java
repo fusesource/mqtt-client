@@ -22,6 +22,7 @@ import junit.framework.TestCase;
 import org.fusesource.hawtbuf.Buffer;
 import static org.fusesource.hawtbuf.Buffer.*;
 import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.mqtt.codec.MQTTFrame;
 
 /**
  * <p>
@@ -35,6 +36,22 @@ public class CallbackApiTest extends BrokerTestSupport {
         final Promise<Buffer> result = new Promise<Buffer>();
         MQTT mqtt = new MQTT();
         mqtt.setHost("localhost", port);
+        mqtt.setTracer(new Tracer(){
+            @Override
+            public void onReceive(MQTTFrame frame) {
+                System.out.println("recv: "+frame);
+            }
+
+            @Override
+            public void onSend(MQTTFrame frame) {
+                System.out.println("send: "+frame);
+            }
+
+            @Override
+            public void debug(String message, Object... args) {
+                System.out.println(String.format("debug: "+message, args));
+            }
+        });
 
         final CallbackConnection connection = mqtt.callbackConnection();
 

@@ -104,4 +104,56 @@ public class MQTTFrame extends MessageSupport.HeaderBase {
     public MQTTFrame retain(boolean retain) {
         return (MQTTFrame) super.retain(retain);
     }
+
+    @Override
+    public String toString() {
+        String type = "unknown";
+        switch(messageType()) {
+            case CONNECT.TYPE:
+                type = "CONNECT";
+                break;
+            case CONNACK.TYPE:
+                type = "CONNACK";
+                break;
+            case DISCONNECT.TYPE:
+                type = "DISCONNECT";
+                break;
+            case PINGREQ.TYPE:
+                type = "PINGREQ";
+                break;
+            case PINGRESP.TYPE:
+                type = "PINGRESP";
+                break;
+            case SUBSCRIBE.TYPE:
+                type = "SUBSCRIBE";
+                break;
+            case UNSUBSCRIBE.TYPE:
+                type = "UNSUBSCRIBE";
+                break;
+            case UNSUBACK.TYPE:
+                type = "UNSUBACK";
+                break;
+            case PUBLISH.TYPE:
+                type = "PUBLISH";
+                break;
+            case SUBACK.TYPE:
+                type = "SUBACK";
+                break;
+            case PUBACK.TYPE:
+                type = "PUBACK";
+                break;
+            case PUBREC.TYPE:
+                type = "PUBREC";
+                break;
+            case PUBREL.TYPE:
+                type = "PUBREL";
+                break;
+            case PUBCOMP.TYPE:
+                type = "PUBCOMP";
+                break;
+            default:
+        }
+
+        return "MQTTFrame { type: "+type+", qos: "+qos()+", dup:"+dup()+" }";
+    }
 }

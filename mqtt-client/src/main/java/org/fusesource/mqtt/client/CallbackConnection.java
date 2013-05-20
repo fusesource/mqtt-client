@@ -93,6 +93,7 @@ public class CallbackConnection {
 
     private HashMap<UTF8Buffer, QoS> activeSubs = new HashMap<UTF8Buffer, QoS>();
 
+
     public CallbackConnection(MQTT mqtt) {
         this.mqtt = mqtt;
         if(this.mqtt.dispatchQueue == null) {
@@ -118,9 +119,56 @@ public class CallbackConnection {
         }
     }
 
+    void reconnect() {
+        try {
+            // And reconnect.
+            createTransport(new LoginHandler(new Callback<Void>() {
+                public void onSuccess(Void value) {
+
+                    mqtt.tracer.debug("Restoring MQTT connection state");
+                    // Setup a new overflow so that the replay can be sent out before the original overflow list.
+                    LinkedList<Request> originalOverflow = overflow;
+                    HashMap<Short, Request> originalRequests = requests;
+                    overflow = new LinkedList<Request>();
+                    requests = new HashMap<Short, Request>();
+
+                    // Restore any active subscriptions.
+                    if (!activeSubs.isEmpty()) {
+                        ArrayList<Topic> topics = new ArrayList<Topic>(activeSubs.size());
+                        for (Map.Entry<UTF8Buffer, QoS> entry : activeSubs.entrySet()) {
+                            topics.add(new Topic(entry.getKey(), entry.getValue()));
+                        }
+                        send(new SUBSCRIBE().topics(topics.toArray(new Topic[topics.size()])), null);
+                    }
+
+                    // Replay any un-acked requests..
+                    for (Map.Entry<Short, Request> entry : originalRequests.entrySet()) {
+                        MQTTFrame frame = entry.getValue().frame;
+                        frame.dup(true); // set the dup flag as these frames were previously transmitted.
+                        send(entry.getValue());
+                    }
+
+                    // Replay the original overflow
+                    for (Request request : originalOverflow) {
+                        // Stuff in the overflow never got sent out.. so no need to set the dup flag
+                        send(request);
+                    }
+
+                }
+
+                public void onFailure(Throwable value) {
+                    handleFatalFailure(value);
+                }
+            }, false));
+        } catch (Throwable e) {
+            handleFatalFailure(e);
+        }
+    }
     void handleSessionFailure(Throwable error) {
         // Socket failure, should we try to reconnect?
         if( !disconnected && (mqtt.reconnectAttemptsMax<0 || reconnects < mqtt.reconnectAttemptsMax ) ) {
+
+            mqtt.tracer.debug("Reconnecting transport");
             // Cleanup the previous transport.
             if(heartBeatMonitor!=null) {
                 heartBeatMonitor.stop();
@@ -128,55 +176,18 @@ public class CallbackConnection {
             }
             final Transport t = transport;
             transport = null;
+
             if(t!=null) {
                 t.stop(new Task() {
                     public void run() {
                         listener.onDisconnected();
-                        try {
-                            // And reconnect.
-                            createTransport(new LoginHandler(new Callback<Void>() {
-                                public void onSuccess(Void value) {
-
-                                    // Setup a new overflow so that the replay can be sent out before the original overflow list.
-                                    LinkedList<Request> originalOverflow = overflow;
-                                    HashMap<Short, Request> originalRequests = requests;
-                                    overflow = new LinkedList<Request>();
-                                    requests = new HashMap<Short, Request>();
-
-                                    // Restore any active subscriptions.
-                                    if (!activeSubs.isEmpty()) {
-                                        ArrayList<Topic> topics = new ArrayList<Topic>(activeSubs.size());
-                                        for (Map.Entry<UTF8Buffer, QoS> entry : activeSubs.entrySet()) {
-                                            topics.add(new Topic(entry.getKey(), entry.getValue()));
-                                        }
-                                        send(new SUBSCRIBE().topics(topics.toArray(new Topic[topics.size()])), null);
-                                    }
-
-                                    // Replay any un-acked requests..
-                                    for (Map.Entry<Short, Request> entry : originalRequests.entrySet()) {
-                                        MQTTFrame frame = entry.getValue().frame;
-                                        frame.dup(true); // set the dup flag as these frames were previously transmitted.
-                                        send(entry.getValue());
-                                    }
-
-                                    // Replay the original overflow
-                                    for (Request request : originalOverflow) {
-                                        // Stuff in the overflow never got sent out.. so no need to set the dup flag
-                                        send(request);
-                                    }
-
-                                }
-
-                                public void onFailure(Throwable value) {
-                                    handleFatalFailure(value);
-                                }
-                            }, false));
-                        } catch (Throwable e) {
-                            handleFatalFailure(e);
-                        }
+                        reconnect();
                     }
                 });
+            } else {
+                reconnect();
             }
+
         } else {
             // nope.
             handleFatalFailure(error);
@@ -213,6 +224,7 @@ public class CallbackConnection {
      * @throws Exception
      */
     void createTransport(final Callback<Transport> onConnect) throws Exception {
+        mqtt.tracer.debug("Connecting");
         String scheme = mqtt.host.getScheme();
 
         final Transport transport;
@@ -249,6 +261,7 @@ public class CallbackConnection {
 
         transport.setTransportListener(new DefaultTransportListener(){
             public void onTransportConnected() {
+                mqtt.tracer.debug("Transport connected");
                 if(disconnected) {
                     onFailure(createDisconnectedError());
                 } else {
@@ -257,6 +270,7 @@ public class CallbackConnection {
             }
 
             public void onTransportFailure(final IOException error) {
+                mqtt.tracer.debug("Transport failure: %s", error);
                 onFailure(error);
             }
 
@@ -286,18 +300,21 @@ public class CallbackConnection {
             transport.setTransportListener(new DefaultTransportListener() {
                 @Override
                 public void onTransportFailure(IOException error) {
+                    mqtt.tracer.debug("Transport failure: %s", error);
                     transport.stop(NOOP);
                     onFailure(error);
                 }
 
                 public void onTransportCommand(Object command) {
                     MQTTFrame response = (MQTTFrame) command;
+                    mqtt.tracer.onReceive(response);
                     try {
                         switch (response.messageType()) {
                             case CONNACK.TYPE:
                                 CONNACK connack = new CONNACK().decode(response);
                                 switch (connack.code()) {
                                     case CONNECTION_ACCEPTED:
+                                        mqtt.tracer.debug("MQTT login accepted");
                                         onSessionEstablished(transport);
                                         cb.onSuccess(null);
                                         listener.onConnected();
@@ -308,19 +325,21 @@ public class CallbackConnection {
                                         });
                                         break;
                                     default:
+                                        mqtt.tracer.debug("MQTT login rejected");
                                         // Bad creds or something. No point in reconnecting.
                                         transport.stop(NOOP);
                                         cb.onFailure(new IOException("Could not connect: " + connack.code()));
                                 }
                                 break;
                             default:
+                                mqtt.tracer.debug("Received unexpected MQTT frame: %d", response.messageType());
                                 // Naughty MQTT server? No point in reconnecting.
                                 transport.stop(NOOP);
                                 cb.onFailure(new IOException("Could not connect. Received unexpected command: " + response.messageType()));
 
                         }
                     } catch (ProtocolException e) {
-                        // Naughty MQTT server? No point in reconnecting.
+                        mqtt.tracer.debug("Protocol error: %s", e);
                         transport.stop(NOOP);
                         cb.onFailure(e);
                     }
@@ -334,7 +353,10 @@ public class CallbackConnection {
                 }
                 mqtt.connect.clientId(utf8(id));
             }
-            boolean accepted = transport.offer(mqtt.connect.encode());
+            MQTTFrame encoded = mqtt.connect.encode();
+            boolean accepted = transport.offer(encoded);
+            mqtt.tracer.onSend(encoded);
+            mqtt.tracer.debug("Logging in");
             assert accepted: "First frame should always be accepted by the transport";
         }
         
@@ -365,7 +387,9 @@ public class CallbackConnection {
         }
         this.transport.setTransportListener(new DefaultTransportListener() {
             public void onTransportCommand(Object command) {
-                processFrame((MQTTFrame) command);
+                MQTTFrame frame = (MQTTFrame) command;
+                mqtt.tracer.onReceive(frame);
+                processFrame(frame);
             }
             public void onRefill() {
                 onRefillCalled =true;
@@ -385,23 +409,28 @@ public class CallbackConnection {
             heartBeatMonitor.setOnKeepAlive(new Task() {
                 public void run() {
                     // Don't care if the offer is rejected, just means we have data outbound.
-                    if(!disconnected && pingedAt==0 && CallbackConnection.this.transport.offer(new PINGREQ().encode())) {
-                        final long now = System.currentTimeMillis();
-                        final long suspends = suspendChanges.get();
-                        pingedAt = now;
-                        queue.executeAfter(CallbackConnection.this.mqtt.getKeepAlive(), TimeUnit.SECONDS, new Task() {
-                            public void run() {
-                                if (now == pingedAt) {
-                                    // if the connection remained suspend we will never get the ping response..
-                                    // Looks like the user has forgoton to resume the connection
-                                    if (suspends == suspendChanges.get() && suspendCount.get() > 0) {
-                                        handleFatalFailure(new IllegalStateException("The connection has remained suspended for an extended period of time so it cannot do proper keep alive processing.  Did you forget to resume the connection?"));
-                                    } else {
-                                        handleSessionFailure(new ProtocolException("Ping timeout").fillInStackTrace());
+                    if(!disconnected && pingedAt==0) {
+                        MQTTFrame encoded = new PINGREQ().encode();
+                        if(CallbackConnection.this.transport.offer(encoded)) {
+                            mqtt.tracer.onSend(encoded);
+                            final long now = System.currentTimeMillis();
+                            final long suspends = suspendChanges.get();
+                            pingedAt = now;
+                            queue.executeAfter(CallbackConnection.this.mqtt.getKeepAlive(), TimeUnit.SECONDS, new Task() {
+                                public void run() {
+                                    if (now == pingedAt) {
+                                        // if the connection remained suspend we will never get the ping response..
+                                        // Looks like the user has forgoton to resume the connection
+                                        if (suspends == suspendChanges.get() && suspendCount.get() > 0) {
+                                            handleFatalFailure(new IllegalStateException("The connection has remained suspended for an extended period of time so it cannot do proper keep alive processing.  Did you forget to resume the connection?"));
+                                        } else {
+                                            mqtt.tracer.debug("Ping timeout");
+                                            handleSessionFailure(new ProtocolException("Ping timeout").fillInStackTrace());
+                                        }
                                     }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                     
                 }
@@ -622,6 +651,7 @@ public class CallbackConnection {
             }
         } else {
             if( overflow.isEmpty() && transport!=null && transport.offer(request.frame) ) {
+                mqtt.tracer.onSend(request.frame);
                 if(request.id==0) {
                     if( request.cb!=null ) {
                         ((Callback<Void>)request.cb).onSuccess(null);
@@ -653,6 +683,7 @@ public class CallbackConnection {
         Request request;
         while((request=overflow.peek())!=null) {
             if( this.transport.offer(request.frame) ) {
+                mqtt.tracer.onSend(request.frame);
                 overflow.removeFirst();
                 if(request.id==0) {
                     if( request.cb!=null ) {
@@ -792,6 +823,7 @@ public class CallbackConnection {
         if( failure == null ) {
             failure = error;
             
+            mqtt.tracer.debug("Fatal connection failure: %s", error);
             // Fail incomplete requests.
             ArrayList<Request> values = new ArrayList(requests.values());
             requests.clear();

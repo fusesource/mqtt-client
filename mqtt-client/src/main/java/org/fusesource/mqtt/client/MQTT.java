@@ -102,6 +102,7 @@ public class MQTT {
     double reconnectBackOffMultiplier = 2.0f;
     long reconnectAttemptsMax = -1;
     long connectAttemptsMax = -1;
+    Tracer tracer = new Tracer();
 
     public MQTT() {
     }
@@ -123,6 +124,7 @@ public class MQTT {
         this.reconnectBackOffMultiplier = other.reconnectBackOffMultiplier;
         this.reconnectAttemptsMax = other.reconnectAttemptsMax;
         this.connectAttemptsMax = other.connectAttemptsMax;
+        this.tracer = other.tracer;
     }
 
     public CallbackConnection callbackConnection() {
@@ -365,4 +367,11 @@ public class MQTT {
         this.reconnectDelayMax = reconnectDelayMax;
     }
 
+    public Tracer getTracer() {
+        return tracer;
+    }
+
+    public void setTracer(Tracer tracer) {
+        this.tracer = tracer;
+    }
 }
