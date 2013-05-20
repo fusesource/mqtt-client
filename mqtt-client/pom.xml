@@ -83,15 +83,9 @@
       <scope>test</scope>
       <version>${apollo-version}</version>
     </dependency>
-    <!-- <dependency>
-      <groupId>org.apache.activemq</groupId>
-      <artifactId>apollo-mqtt</artifactId>
-      <version>${apollo-version}</version>
-      <scope>test</scope>
-    </dependency> -->
     <dependency>
       <groupId>org.apache.activemq</groupId>
-      <artifactId>apollo-leveldb</artifactId>
+      <artifactId>apollo-mqtt</artifactId>
       <version>${apollo-version}</version>
       <scope>test</scope>
     </dependency>
