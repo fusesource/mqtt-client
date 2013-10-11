@@ -233,7 +233,7 @@ public class CallbackConnection {
         }  else if( SslTransport.protocol(scheme)!=null ) {
             SslTransport ssl = new SslTransport();
             if( mqtt.sslContext == null ) {
-                mqtt.sslContext = SSLContext.getInstance(SslTransport.protocol(scheme));
+                mqtt.sslContext = SSLContext.getDefault();
             }
             ssl.setSSLContext(mqtt.sslContext);
             transport = ssl;
