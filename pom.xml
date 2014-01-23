@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.fusesource</groupId>
     <artifactId>fusesource-pom</artifactId>
-    <version>1.9</version>
+    <version>1.10</version>
   </parent>
   
   <groupId>org.fusesource.mqtt-client</groupId>
@@ -97,16 +97,6 @@
   </scm>
   
   <distributionManagement>
-    <repository>
-      <id>fusesource-nexus-staging</id>
-      <name>Fusesource Release Repository</name>
-      <url>http://repo.fusesource.com/nexus/service/local/staging/deploy/maven2</url>
-    </repository>
-    <snapshotRepository>
-      <id>fusesource-nexus-snapshots</id>
-      <name>Fusesource Nexus Snapshots</name>
-      <url>http://repo.fusesource.com/nexus/content/repositories/snapshots</url>
-    </snapshotRepository>
     <site>
       <id>website.fusesource.org</id>
       <name>website</name>
