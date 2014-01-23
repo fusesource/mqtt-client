@@ -63,6 +63,7 @@ public class CONNECT implements Message {
         this.cleanSession = other.cleanSession;
         this.userName = other.userName;
         this.password = other.password;
+        this.version = other.version;
     }
 
     public byte messageType() {
