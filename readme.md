@@ -78,6 +78,9 @@ attempting to connect.
 * `setWillRetain`: Set to true if you want the Will to be published with the retain 
   option.
 
+* `setVersion`: Set to "3.1.1" to use MQTT version 3.1.1.  Otherwise defaults to the
+  3.1 protocol version.
+
 ### Controlling Connection Reconnects
 
 Connection will automatically reconnect and re-establish messaging session
