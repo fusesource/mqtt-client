@@ -68,6 +68,7 @@ public class Listener {
         stdout(" -s : show message topics in output");
         stdout(" -q : quality of service level to use for the subscription. Defaults to 0.");
         stdout(" -t : mqtt topic to subscribe to. May be repeated multiple times.");
+        stdout(" -v : MQTT version to use 3.1 or 3.1.1. (default: 3.1)");
         stdout("");
         System.exit(exitCode);
     }
@@ -99,6 +100,8 @@ public class Listener {
                 String arg = argl.removeFirst();
                 if ("--help".equals(arg)) {
                     displayHelpAndExit(0);
+                } else if ("-v".equals(arg)) {
+                    main.mqtt.setVersion(shift(argl));
                 } else if ("-h".equals(arg)) {
                     main.mqtt.setHost(shift(argl));
                 } else if ("-k".equals(arg)) {

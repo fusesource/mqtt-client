@@ -81,6 +81,7 @@ public class Publisher {
         stdout(" -z : send a null (zero length) message.");
         stdout(" -f : send the contents of a file as the message.");
         stdout(" -pc : prefix a message counter to the message");
+        stdout(" -v : MQTT version to use 3.1 or 3.1.1. (default: 3.1)");
         stdout("");
         System.exit(exitCode);
     }
@@ -110,6 +111,8 @@ public class Publisher {
                 String arg = argl.removeFirst();
                 if ("--help".equals(arg)) {
                     displayHelpAndExit(0);
+                } else if ("-v".equals(arg)) {
+                    main.mqtt.setVersion(shift(argl));
                 } else if ("-h".equals(arg)) {
                     main.mqtt.setHost(shift(argl));
                 } else if ("-k".equals(arg)) {

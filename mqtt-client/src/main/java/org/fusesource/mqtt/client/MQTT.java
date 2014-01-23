@@ -75,12 +75,12 @@ public class MQTT {
         blockingThreadPool = pool;
     }
     
-    private static final URI DEFAULT_HOST;
-    static {
+    private static final URI DEFAULT_HOST = createDefaultHost();
+    private static URI createDefaultHost() {
         try {
-            DEFAULT_HOST = new URI("tcp://127.0.0.1:1883");
+            return new URI("tcp://127.0.0.1:1883");
         } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 
@@ -218,6 +218,21 @@ public class MQTT {
 
     public void setWillQos(QoS willQos) {
         connect.willQos(willQos);
+    }
+
+    public void setVersion(String version) {
+        if( "3.1".equals(version) ) {
+            connect.version(3);
+        } else if( "3.1.1".equals(version) ) {
+            connect.version(4);
+        }
+    }
+    public String getVersion() {
+        switch(connect.version()) {
+            case 3: return "3.1";
+            case 4: return "3.1.1";
+            default: return "unknown";
+        }
     }
 
     public void setWillRetain(boolean willRetain) {
