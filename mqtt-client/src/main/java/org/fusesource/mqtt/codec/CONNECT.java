@@ -18,12 +18,14 @@
 
 package org.fusesource.mqtt.codec;
 
-import org.fusesource.hawtbuf.*;
-import org.fusesource.mqtt.client.QoS;
-
 import java.io.IOException;
 import java.net.ProtocolException;
-import static org.fusesource.mqtt.codec.MessageSupport.*;
+
+import static org.fusesource.mqtt.codec.MessageSupport.Message;
+import org.fusesource.hawtbuf.DataByteArrayInputStream;
+import org.fusesource.hawtbuf.DataByteArrayOutputStream;
+import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.mqtt.client.QoS;
 
 /**
  * <p>
@@ -98,7 +100,12 @@ public class CONNECT implements Message {
         cleanSession = (flags & 0x02) > 0;
 
         keepAlive = is.readShort();
-        clientId = MessageSupport.readUTF(is);
+        try {
+            clientId = MessageSupport.readUTF(is);
+        } catch (ZeroLengthBufferException e) {
+            // Zero length client ID is allowed, but caller MUST validate that Clean Session is also 1
+            clientId = null;
+        }
         if(will_flag) {
             willTopic = MessageSupport.readUTF(is);
             willMessage = MessageSupport.readUTF(is);
