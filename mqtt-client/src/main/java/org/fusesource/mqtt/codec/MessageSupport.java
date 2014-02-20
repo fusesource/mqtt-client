@@ -58,9 +58,6 @@ public class MessageSupport {
 
     static protected UTF8Buffer readUTF(DataByteArrayInputStream is) throws ProtocolException {
         int size = is.readShort();
-        if (size == 0) {
-            throw new ZeroLengthBufferException("Invalid message, buffer size is 0");
-        }
         Buffer buffer = is.readBuffer(size);
         if (buffer == null || buffer.length != size) {
             throw new ProtocolException("Invalid message encoding");

@@ -47,4 +47,19 @@ public class BlockingApiTest extends BrokerTestSupport {
 
         connection.disconnect();
     }
+    public void testInvalidClientId() throws Exception {
+        MQTT mqtt = new MQTT();
+        mqtt.setHost("localhost", port);
+        mqtt.setVersion("3.1.1");
+        mqtt.setCleanSession(false);
+        mqtt.setClientId((String) null);
+
+        try {
+            mqtt.blockingConnection();
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        } catch (Throwable e) {
+            fail("Unexpected exception: "+e);
+        }
+    }
 }

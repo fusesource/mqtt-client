@@ -100,10 +100,8 @@ public class CONNECT implements Message {
         cleanSession = (flags & 0x02) > 0;
 
         keepAlive = is.readShort();
-        try {
-            clientId = MessageSupport.readUTF(is);
-        } catch (ZeroLengthBufferException e) {
-            // Zero length client ID is allowed, but caller MUST validate that Clean Session is also 1
+        clientId = MessageSupport.readUTF(is);
+        if( clientId.length == 0 ) {
             clientId = null;
         }
         if(will_flag) {
@@ -121,6 +119,9 @@ public class CONNECT implements Message {
     
     public MQTTFrame encode() {
         try {
+            if( (clientId==null || clientId.length == 0) && !cleanSession ) {
+                throw new IllegalArgumentException("A clean session must be used when no clientId is specified");
+            }
             DataByteArrayOutputStream os = new DataByteArrayOutputStream(500);
             if(version==3) {
                 MessageSupport.writeUTF(os, V3_PROTOCOL_NAME);
@@ -129,8 +130,9 @@ public class CONNECT implements Message {
                 MessageSupport.writeUTF(os, V4_PROTOCOL_NAME);
                 os.writeByte(version);
             } else {
-                throw new IllegalStateException("Invalid version: "+version);
+                throw new IllegalArgumentException("Invalid version: "+version);
             }
+
             int flags = 0;
             if(userName!=null) {
                 flags |= 0x80;
