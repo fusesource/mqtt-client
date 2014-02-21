@@ -18,7 +18,12 @@
 
 package org.fusesource.mqtt.client;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.fusesource.hawtbuf.Buffer.utf8;
+import org.fusesource.mqtt.codec.MQTTFrame;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>
@@ -27,6 +32,8 @@ import static org.fusesource.hawtbuf.Buffer.utf8;
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 public class BlockingApiTest extends BrokerTestSupport {
+
+    private static final Logger LOG = LoggerFactory.getLogger(BlockingApiTest.class);
 
     public void testInterface() throws Exception {
         MQTT mqtt = new MQTT();
@@ -47,6 +54,7 @@ public class BlockingApiTest extends BrokerTestSupport {
 
         connection.disconnect();
     }
+
     public void testInvalidClientId() throws Exception {
         MQTT mqtt = new MQTT();
         mqtt.setHost("localhost", port);
@@ -61,5 +69,56 @@ public class BlockingApiTest extends BrokerTestSupport {
         } catch (Throwable e) {
             fail("Unexpected exception: "+e);
         }
+
+        // also test "" client id
+        mqtt.setClientId("");
+        try {
+            mqtt.blockingConnection();
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        } catch (Throwable e) {
+            fail("Unexpected exception: "+e);
+        }
+    }
+
+    public void testReceiveTimeout() throws Exception {
+        MQTT mqtt = new MQTT();
+        mqtt.setHost("localhost", port);
+        mqtt.setTracer(new Tracer() {
+            @Override
+            public void onReceive(MQTTFrame frame) {
+                LOG.info("Client Received:\n" + frame);
+            }
+
+            @Override
+            public void onSend(MQTTFrame frame) {
+                LOG.info("Client Sent:\n" + frame);
+            }
+
+            @Override
+            public void debug(String message, Object... args) {
+                LOG.info(String.format(message, args));
+            }
+        });
+
+        BlockingConnection connection = mqtt.blockingConnection();
+        connection.connect();
+
+        Topic[] topics = {new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)};
+        byte[] qoses = connection.subscribe(topics);
+
+        // force a receive timeout
+        Message message = connection.receive(1000, TimeUnit.MILLISECONDS);
+        assertNull(message);
+
+        connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false);
+        message = connection.receive(5000, TimeUnit.MILLISECONDS);
+        assertNotNull(message);
+        assertEquals("Hello", new String(message.getPayload()));
+
+        // To let the server know that it has been processed.
+        message.ack();
+
+        connection.disconnect();
     }
 }
