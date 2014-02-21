@@ -58,12 +58,7 @@ public class FutureConnection {
 
             public void onPublish(UTF8Buffer topic, Buffer payload, Runnable onComplete) {
                 getDispatchQueue().assertExecuting();
-                Message msg = new Message(getDispatchQueue(), topic, payload, onComplete);
-                if( receiveFutures.isEmpty() ) {
-                    receivedFrames.add(msg);
-                } else {
-                    receiveFutures.removeFirst().onSuccess(msg);
-                }
+                deliverMessage(new Message(getDispatchQueue(), topic, payload, onComplete));
             }
 
             public void onFailure(Throwable value) {
@@ -78,11 +73,27 @@ public class FutureConnection {
         });
     }
 
+    void deliverMessage(Message msg) {
+        if( receiveFutures.isEmpty() ) {
+            receivedFrames.add(msg);
+        } else {
+            receiveFutures.removeFirst().onSuccess(msg);
+        }
+    }
+
+    void putBackMessage(Message msg) {
+        if( receiveFutures.isEmpty() ) {
+            receivedFrames.addFirst(msg);
+        } else {
+            receiveFutures.removeFirst().onSuccess(msg);
+        }
+    }
+
     public boolean isConnected() {
         return connected;
     }
 
-    private DispatchQueue getDispatchQueue() {
+    public DispatchQueue getDispatchQueue() {
         return this.next.getDispatchQueue();
     }
 

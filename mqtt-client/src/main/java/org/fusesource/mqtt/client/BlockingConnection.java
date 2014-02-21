@@ -20,6 +20,7 @@ package org.fusesource.mqtt.client;
 
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.hawtdispatch.Task;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -90,9 +91,18 @@ public class BlockingConnection {
      * @return null if the receive times out.
      */
     public Message receive(long amount, TimeUnit unit) throws Exception {
+        Future<Message> receive = this.next.receive();
         try {
-            return this.next.receive().await(amount, unit);
+            return receive.await(amount, unit);
         } catch (TimeoutException e) {
+            // Put it back on the queue..
+            receive.then(new Callback<Message>() {
+                public void onSuccess(final Message value) {
+                    next.putBackMessage(value);
+                }
+                public void onFailure(Throwable value) {
+                }
+            });
             return null;
         }
     }
