@@ -69,6 +69,16 @@ public class BlockingApiTest extends BrokerTestSupport {
         } catch (Throwable e) {
             fail("Unexpected exception: "+e);
         }
+
+        // also test "" client id
+        mqtt.setClientId("");
+        try {
+            mqtt.blockingConnection();
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        } catch (Throwable e) {
+            fail("Unexpected exception: "+e);
+        }
     }
 
     public void testReceiveTimeout() throws Exception {
