@@ -177,6 +177,26 @@
         </configuration>
       </plugin>
     </plugins>
+    
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.5</version>
+          <configuration>
+            <pushChanges>false</pushChanges>
+            <localCheckout>true</localCheckout>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <allowTimestampedSnapshots>false</allowTimestampedSnapshots>
+            <preparationGoals>clean install</preparationGoals>
+            <goals>deploy</goals>
+            <arguments>-Prelease</arguments>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    
   </build>
 
   <profiles>
@@ -294,7 +314,7 @@
       </properties>
     </profile>
   </profiles>
-  
+
   <modules>
     <module>mqtt-client</module>
     <module>mqtt-client-java1.4-uber</module>
