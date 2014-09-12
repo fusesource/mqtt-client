@@ -167,7 +167,7 @@ with an blocking API.
 
 Publish messages to a topic using the `publish` method:
 
-    connection.publish("foo", "Hello".toBytes(), QoS.AT_LEAST_ONCE, false);
+    connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false);
 
 You can subscribe to multiple topics using the the `subscribe` method:
     
