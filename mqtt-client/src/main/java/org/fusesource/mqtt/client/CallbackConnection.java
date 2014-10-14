@@ -698,7 +698,6 @@ public class CallbackConnection {
             if( overflow.isEmpty() && transport!=null && transport.offer(request.frame) ) {
                 mqtt.tracer.onSend(request.frame);
                 if(request.id==0) {
-                    System.out.println(" +++ send - found request.id=0 for " + request);
                     if( request.cb!=null ) {
                         ((Callback<Void>)request.cb).onSuccess(null);
                     }
@@ -737,7 +736,6 @@ public class CallbackConnection {
                         ((Callback<Void>)request.cb).onSuccess(null);
                     }
                 } else {
-                    System.out.println(" +++ drainOverflow - about to put id " + request.id);
                     this.requests.put(request.id, request);
                 }
             } else {
@@ -757,7 +755,6 @@ public class CallbackConnection {
 
 
     private void completeRequest(short id, byte originalType, Object arg) {
-        System.out.println(" +++ completeRequest - about to remove id " + id);
         Request request = requests.remove(id);
         if( request!=null ) {
             assert originalType==request.frame.messageType();
