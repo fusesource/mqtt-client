@@ -359,7 +359,7 @@ public class CallbackConnection {
                                         mqtt.tracer.debug("MQTT login rejected");
                                         // Bad creds or something. No point in reconnecting.
                                         transport.stop(NOOP);
-                                        cb.onFailure(new IOException("Could not connect: " + connack.code()));
+                                        cb.onFailure(new MQTTException("Could not connect: " + connack.code(), connack));
                                 }
                                 break;
                             default:
