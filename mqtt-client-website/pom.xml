@@ -123,6 +123,7 @@
             </goals>
             <phase>package</phase>
           </execution>
+          <!--
           <execution>
             <id>deploy</id>
             <goals>
@@ -130,7 +131,7 @@
             </goals>
             <phase>deploy</phase>
           </execution> 
-                    
+          -->
         </executions>
         <configuration>
           <warSourceDirectory>${basedir}/src</warSourceDirectory>
