@@ -25,13 +25,13 @@
   <parent>
     <groupId>org.fusesource.mqtt-client</groupId>
     <artifactId>mqtt-client-project</artifactId>
-    <version>1.11</version>
+    <version>1.12-SNAPSHOT</version>
   </parent>
   
   
   <groupId>org.fusesource.mqtt-client</groupId>
   <artifactId>mqtt-client-java1.4-uber</artifactId>
-  <version>1.11</version>
+  <version>1.12-SNAPSHOT</version>
   
   <name>${project.artifactId}</name>
   <description>
