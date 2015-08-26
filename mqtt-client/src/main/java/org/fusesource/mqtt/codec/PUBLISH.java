@@ -70,20 +70,19 @@ public class PUBLISH extends MessageSupport.HeaderBase implements Message, Acked
     
     public MQTTFrame encode() {
         try {
-            DataByteArrayOutputStream variableHeader = new DataByteArrayOutputStream();
-            MessageSupport.writeUTF(variableHeader, topicName);
+            DataByteArrayOutputStream os = new DataByteArrayOutputStream();
+            MessageSupport.writeUTF(os, topicName);
             QoS qos = qos();
             if(qos != QoS.AT_MOST_ONCE) {
-                variableHeader.writeShort(messageId);
+                os.writeShort(messageId);
             }
             MQTTFrame frame = new MQTTFrame();
             frame.header(header());
             frame.commandType(TYPE);
-            if(payload==null || payload.length==0) {
-                frame.buffer(variableHeader.toBuffer());
-            } else {
-                frame.buffers(variableHeader.toBuffer(), payload);
+            if(payload!=null && payload.length!=0) {
+                os.write(payload);
             }
+            frame.buffer(os.toBuffer());
             return frame;
         } catch (IOException e) {
             throw new RuntimeException("The impossible happened");
