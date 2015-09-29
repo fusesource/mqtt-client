@@ -57,10 +57,7 @@ public class UNSUBSCRIBE extends MessageSupport.HeaderBase implements Message, A
 
         DataByteArrayInputStream is = new DataByteArrayInputStream(frame.buffers[0]);
 
-        QoS qos = qos();
-        if(qos != QoS.AT_MOST_ONCE) {
-            messageId = is.readShort();
-        }
+        messageId = is.readShort();
         ArrayList<UTF8Buffer> list = new ArrayList<UTF8Buffer>();
         while(is.available() > 0) {
             list.add(MessageSupport.readUTF(is));
