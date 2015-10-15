@@ -17,7 +17,7 @@ Add the following to your maven `pom.xml` file.
     <dependency>
       <groupId>org.fusesource.mqtt-client</groupId>
       <artifactId>mqtt-client</artifactId>
-      <version>1.11</version>
+      <version>1.12</version>
     </dependency>
 
 ## Using from any Other Build System
