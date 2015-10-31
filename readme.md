@@ -19,6 +19,13 @@ Add the following to your maven `pom.xml` file.
       <artifactId>mqtt-client</artifactId>
       <version>1.11</version>
     </dependency>
+	
+## Using from Gradle
+
+Add the following to your gradle file.
+
+    compile 'org.fusesource.mqtt-client:mqtt-client:1.12'
+
 
 ## Using from any Other Build System
 
