@@ -210,7 +210,7 @@ return the result via a Future.
     Message message = receive.await();
     message.ack();
     
-    Future<Void> f4 connection.disconnect();
+    Future<Void> f4 = connection.disconnect();
     f4.await();
 
 
