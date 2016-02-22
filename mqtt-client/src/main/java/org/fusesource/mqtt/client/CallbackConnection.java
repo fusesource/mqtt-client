@@ -106,16 +106,16 @@ public class CallbackConnection {
     private Runnable refiller;
     private Map<Short, Request> requests = new ConcurrentHashMap<Short, Request>();
     private LinkedList<Request> overflow = new LinkedList<Request>();
-    private HashSet<Short> processed = new HashSet<Short>();
+    private final HashSet<Short> processed = new HashSet<Short>();
     private Throwable failure;
     private boolean disconnected = false;
     private HeartBeatMonitor heartBeatMonitor;
     private long pingedAt;
     private long reconnects = 0;
-    private AtomicInteger suspendCount = new AtomicInteger(0);
-    private AtomicInteger suspendChanges = new AtomicInteger(0);
+    private final AtomicInteger suspendCount = new AtomicInteger(0);
+    private final AtomicInteger suspendChanges = new AtomicInteger(0);
 
-    private HashMap<UTF8Buffer, QoS> activeSubs = new HashMap<UTF8Buffer, QoS>();
+    private final HashMap<UTF8Buffer, QoS> activeSubs = new HashMap<UTF8Buffer, QoS>();
 
 
     public CallbackConnection(MQTT mqtt) {

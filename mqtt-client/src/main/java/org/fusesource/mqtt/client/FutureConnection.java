@@ -39,8 +39,8 @@ public class FutureConnection {
 
     private final CallbackConnection next;
 
-    private LinkedList<Promise<Message>> receiveFutures = new LinkedList<Promise<Message>>();
-    private LinkedList<Message> receivedFrames = new LinkedList<Message>();
+    private final LinkedList<Promise<Message>> receiveFutures = new LinkedList<Promise<Message>>();
+    private final LinkedList<Message> receivedFrames = new LinkedList<Message>();
 
     volatile boolean connected;
 
