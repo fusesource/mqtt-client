@@ -41,7 +41,7 @@ public class UNSUBSCRIBE extends MessageSupport.HeaderBase implements Message, A
     public static final UTF8Buffer[] NO_TOPICS = new UTF8Buffer[0];
 
     private short messageId;
-    private UTF8Buffer topics[] = NO_TOPICS;
+    private UTF8Buffer[] topics = NO_TOPICS;
 
     public UNSUBSCRIBE() {
         qos(QoS.AT_LEAST_ONCE);

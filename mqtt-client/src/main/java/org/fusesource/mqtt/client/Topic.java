@@ -50,8 +50,9 @@ public class Topic {
 
     @Override
     public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o.getClass() != this.getClass()) return false;
         if (this == o) return true;
-        if (!(o instanceof Topic)) return false;
 
         Topic topic = (Topic) o;
 

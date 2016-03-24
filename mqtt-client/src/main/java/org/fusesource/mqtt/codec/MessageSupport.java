@@ -33,7 +33,11 @@ import org.fusesource.mqtt.client.QoS;
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-public class MessageSupport {
+public final class MessageSupport {
+
+    private MessageSupport() throws InstantiationException {
+        throw new InstantiationException("This class is not for instantiation");
+    }
 
     /**
      * All command objects implement this interface.

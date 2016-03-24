@@ -41,7 +41,7 @@ public class SUBSCRIBE extends MessageSupport.HeaderBase implements Message, Ack
     public static final Topic[] NO_TOPICS = new Topic[0];
 
     private short messageId;
-    private Topic topics[] = NO_TOPICS;
+    private Topic[] topics = NO_TOPICS;
 
     public SUBSCRIBE() {
         qos(QoS.AT_LEAST_ONCE);

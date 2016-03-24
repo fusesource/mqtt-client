@@ -38,7 +38,7 @@ public class SUBACK implements Message {
     public static final byte TYPE = 9;
 
     private short messageId;
-    private byte grantedQos[] = NO_GRANTED_QOS;
+    private byte[] grantedQos = NO_GRANTED_QOS;
 
     public byte messageType() {
         return TYPE;
