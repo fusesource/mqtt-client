@@ -163,7 +163,7 @@ public class Publisher {
                     File file = new File(shift(argl));
                     RandomAccessFile raf = new RandomAccessFile(file, "r");
                     try {
-                        byte data[] = new byte[(int) raf.length()];
+                        byte[] data = new byte[(int) raf.length()];
                         raf.seek(0);
                         raf.readFully(data);
                         main.body = new Buffer(data);

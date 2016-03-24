@@ -42,8 +42,8 @@ import static org.fusesource.hawtdispatch.Dispatch.createQueue;
  */
 public class MQTT {
 
-    private static final long KEEP_ALIVE = Long.parseLong(System.getProperty("mqtt.thread.keep_alive", ""+1000));
-    private static final long STACK_SIZE = Long.parseLong(System.getProperty("mqtt.thread.stack_size", ""+1024*512));
+    private static final long KEEP_ALIVE = Long.parseLong(System.getProperty("mqtt.thread.keep_alive", Integer.toString(1000)));
+    private static final long STACK_SIZE = Long.parseLong(System.getProperty("mqtt.thread.stack_size", Integer.toString(1024*512)));
     private static ThreadPoolExecutor blockingThreadPool;
 
 
