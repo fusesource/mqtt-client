@@ -31,10 +31,10 @@ import org.fusesource.hawtdispatch.TaskWrapper;
  */
 public class Message {
 
-    private UTF8Buffer topic;
-    private Buffer payload;
+    private final UTF8Buffer topic;
+    private final Buffer payload;
     private Runnable onComplete;
-    private DispatchQueue queue;
+    private final DispatchQueue queue;
 
     public Message(DispatchQueue queue, UTF8Buffer topic, Buffer payload, Runnable onComplete) {
         this.queue = queue;
