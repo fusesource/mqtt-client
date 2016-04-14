@@ -446,7 +446,7 @@ public class CallbackConnection {
                     // Don't care if the offer is rejected, just means we have data outbound.
                     if(!disconnected && pingedAt==0) {
                         MQTTFrame encoded = new PINGREQ().encode();
-                        if(CallbackConnection.this.transport.offer(encoded)) {
+                        if(CallbackConnection.this.transport != null && CallbackConnection.this.transport.offer(encoded)) {
                             mqtt.tracer.onSend(encoded);
                             final long now = System.currentTimeMillis();
                             final long suspends = suspendChanges.get();
@@ -461,7 +461,6 @@ public class CallbackConnection {
                                             handleFatalFailure(new IllegalStateException("The connection has remained suspended for an extended period of time so it cannot do proper keep alive processing.  Did you forget to resume the connection?"));
                                         } else {
                                             mqtt.tracer.debug("Ping timeout");
-                                            handleSessionFailure(new ProtocolException("Ping timeout").fillInStackTrace());
                                         }
                                     }
                                 }
