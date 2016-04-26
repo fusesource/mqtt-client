@@ -75,9 +75,9 @@ import org.fusesource.mqtt.codec.UNSUBSCRIBE;
 public class CallbackConnection {
     
     private static class Request {
-        final MQTTFrame frame;
+        private final MQTTFrame frame;
         private final short id;
-        final Callback cb;
+        private final Callback cb;
 
         Request(int id, MQTTFrame frame, Callback cb) {
             this.id = (short) id;
@@ -317,7 +317,7 @@ public class CallbackConnection {
     }
 
     class LoginHandler implements Callback<Transport> {
-        final Callback<Void> cb;
+        private final Callback<Void> cb;
         private final boolean initialConnect;
 
         LoginHandler(Callback<Void> cb, boolean initialConnect) {
@@ -410,7 +410,7 @@ public class CallbackConnection {
         }
     }
 
-    boolean onRefillCalled =false;
+    private boolean onRefillCalled =false;
     public void onSessionEstablished(Transport transport) {
         this.transport = transport;
         if( suspendCount.get() > 0 ) {
@@ -535,7 +535,7 @@ public class CallbackConnection {
         disconnected = true;
         final short requestId = getNextMessageId();
         final Runnable stop = new Runnable() {
-            boolean executed = false;
+            private boolean executed = false;
             public void run() {
                 if(!executed) {
                     executed = true;
@@ -711,7 +711,7 @@ public class CallbackConnection {
         }
     }
 
-    short nextMessageId = 1;
+    private short nextMessageId = 1;
     private short getNextMessageId() {
         short rc = nextMessageId;
         nextMessageId++;

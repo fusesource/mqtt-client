@@ -84,25 +84,25 @@ public class MQTT {
         }
     }
 
-    URI host = DEFAULT_HOST; 
-    URI localAddress;
-    SSLContext sslContext;
-    DispatchQueue dispatchQueue;
-    Executor blockingExecutor;
-    int maxReadRate;
-    int maxWriteRate;
-    int trafficClass = TcpTransport.IPTOS_THROUGHPUT;
-    int receiveBufferSize = 1024*64;
-    int sendBufferSize = 1024*64;
-    boolean useLocalHost = true;
-    CONNECT connect = new CONNECT();
+    protected URI host = DEFAULT_HOST;
+    protected URI localAddress;
+    protected SSLContext sslContext;
+    protected DispatchQueue dispatchQueue;
+    protected Executor blockingExecutor;
+    protected int maxReadRate;
+    protected int maxWriteRate;
+    protected int trafficClass = TcpTransport.IPTOS_THROUGHPUT;
+    protected int receiveBufferSize = 1024*64;
+    protected int sendBufferSize = 1024*64;
+    protected boolean useLocalHost = true;
+    protected CONNECT connect = new CONNECT();
 
-    long reconnectDelay = 10;
-    long reconnectDelayMax = 30*1000;
-    double reconnectBackOffMultiplier = 2.0f;
-    long reconnectAttemptsMax = -1;
-    long connectAttemptsMax = -1;
-    Tracer tracer = new Tracer();
+    protected long reconnectDelay = 10;
+    protected long reconnectDelayMax = 30*1000;
+    protected double reconnectBackOffMultiplier = 2.0f;
+    protected long reconnectAttemptsMax = -1;
+    protected long connectAttemptsMax = -1;
+    protected Tracer tracer = new Tracer();
 
     public MQTT() {
     }

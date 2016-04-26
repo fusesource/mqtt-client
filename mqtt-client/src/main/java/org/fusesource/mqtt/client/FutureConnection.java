@@ -42,7 +42,7 @@ public class FutureConnection {
     private final LinkedList<Promise<Message>> receiveFutures = new LinkedList<Promise<Message>>();
     private final LinkedList<Message> receivedFrames = new LinkedList<Message>();
 
-    volatile boolean connected;
+    private volatile boolean connected;
 
     public FutureConnection(CallbackConnection next) {
         this.next = next;
