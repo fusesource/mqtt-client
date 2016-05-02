@@ -1,7 +1,7 @@
 /**
- * Copyright (C) 2010-2012, FuseSource Corp.  All rights reserved.
+ * Copyright (C) 2016, Red Hat Inc.  All rights reserved.
  *
- *     http://fusesource.com
+ *     http://redhat.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,15 @@ package org.fusesource.mqtt.client;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+
 /**
  * <p>
  * </p>
  *
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
-@Deprecated
-public interface Listener {
-    public void onConnected();
-    public void onDisconnected();
-    public void onPublish(UTF8Buffer topic, Buffer body, Runnable ack);
-    public void onFailure(Throwable value);
+public interface ExtendedListener extends Listener {
+    public void onPublish(UTF8Buffer topic, Buffer body, Callback<Callback<Void>> ack);
 }

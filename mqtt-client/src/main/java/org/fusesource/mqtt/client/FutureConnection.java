@@ -25,6 +25,7 @@ import org.fusesource.hawtdispatch.Task;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.concurrent.CountDownLatch;
 
 import static org.fusesource.hawtbuf.Buffer.utf8;
 
@@ -46,7 +47,7 @@ public class FutureConnection {
 
     public FutureConnection(CallbackConnection next) {
         this.next = next;
-        this.next.listener(new Listener() {
+        this.next.listener(new ExtendedListener() {
 
             public void onConnected() {
                 connected = true;
@@ -56,9 +57,20 @@ public class FutureConnection {
                 connected = false;
             }
 
-            public void onPublish(UTF8Buffer topic, Buffer payload, Runnable onComplete) {
+
+            public void onPublish(UTF8Buffer topic, Buffer payload, Callback<Callback<Void>> onComplete) {
                 getDispatchQueue().assertExecuting();
                 deliverMessage(new Message(getDispatchQueue(), topic, payload, onComplete));
+            }
+
+            public void onPublish(UTF8Buffer topic, Buffer payload, final Runnable onComplete) {
+                onPublish(topic, payload, new Callback<Callback<Void>>() {
+                    public void onSuccess(Callback<Void> value) {
+                        onComplete.run();
+                    }
+                    public void onFailure(Throwable value) {
+                    }
+                });
             }
 
             public void onFailure(Throwable value) {

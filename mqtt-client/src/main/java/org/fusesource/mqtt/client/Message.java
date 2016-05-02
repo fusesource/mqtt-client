@@ -21,7 +21,7 @@ package org.fusesource.mqtt.client;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.hawtdispatch.DispatchQueue;
-import org.fusesource.hawtdispatch.TaskWrapper;
+import org.fusesource.hawtdispatch.Task;
 
 /**
  * <p>
@@ -33,10 +33,11 @@ public class Message {
 
     private final UTF8Buffer topic;
     private final Buffer payload;
-    private Runnable onComplete;
+    private Callback<Callback<Void>>  onComplete;
     private final DispatchQueue queue;
+    boolean blocking = false;
 
-    public Message(DispatchQueue queue, UTF8Buffer topic, Buffer payload, Runnable onComplete) {
+    public Message(DispatchQueue queue, UTF8Buffer topic, Buffer payload, Callback<Callback<Void>> onComplete) {
         this.queue = queue;
         this.payload = payload;
         this.topic = topic;
@@ -70,9 +71,33 @@ public class Message {
     }
 
     public void ack() {
+        if( blocking ) {
+            final Promise<Void> future = new Promise<Void>();
+            ack(future);
+            try {
+                future.await();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            ack(null);
+        }
+    }
+
+    public void ack(final Callback<Void> onAcked) {
         if(onComplete!=null) {
-            queue.execute(new TaskWrapper(onComplete));
+            queue.execute(new Task() {
+                Callback<Callback<Void>> onCompleteCopy = onComplete;
+                @Override
+                public void run() {
+                    onCompleteCopy.onSuccess(onAcked);
+                }
+            });
             onComplete = null;
+        } else {
+            if( onAcked!=null ) {
+                onAcked.onSuccess(null);
+            }
         }
     }
 

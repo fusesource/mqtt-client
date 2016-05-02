@@ -93,7 +93,11 @@ public class BlockingConnection {
     public Message receive(long amount, TimeUnit unit) throws Exception {
         Future<Message> receive = this.next.receive();
         try {
-            return receive.await(amount, unit);
+            Message message = receive.await(amount, unit);
+            if( message!=null ) {
+                message.blocking = true;
+            }
+            return message;
         } catch (TimeoutException e) {
             // Put it back on the queue..
             receive.then(new Callback<Message>() {

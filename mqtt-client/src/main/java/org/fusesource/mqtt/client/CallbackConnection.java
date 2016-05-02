@@ -18,24 +18,6 @@
 
 package org.fusesource.mqtt.client;
 
-import static org.fusesource.hawtbuf.Buffer.utf8;
-import static org.fusesource.hawtdispatch.Dispatch.createQueue;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ProtocolException;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.net.ssl.SSLContext;
-
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.HexSupport;
 import org.fusesource.hawtbuf.UTF8Buffer;
@@ -64,6 +46,22 @@ import org.fusesource.mqtt.codec.SUBSCRIBE;
 import org.fusesource.mqtt.codec.UNSUBACK;
 import org.fusesource.mqtt.codec.UNSUBSCRIBE;
 
+import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ProtocolException;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.fusesource.hawtbuf.Buffer.utf8;
+import static org.fusesource.hawtdispatch.Dispatch.createQueue;
+
 
 /**
  * <p>
@@ -86,12 +84,15 @@ public class CallbackConnection {
         }
     }
 
-    private static final Listener DEFAULT_LISTENER = new Listener(){
+    private static final ExtendedListener DEFAULT_LISTENER = new ExtendedListener(){
         public void onConnected() {
         }
         public void onDisconnected() {
         }
         public void onPublish(UTF8Buffer utf8Buffer, Buffer buffer, Runnable runnable) {
+            this.onFailure(createListenerNotSetError());
+        }
+        public void onPublish(UTF8Buffer topic, Buffer body, Callback<Callback<Void>> ack) {
             this.onFailure(createListenerNotSetError());
         }
         public void onFailure(Throwable value) {
@@ -102,11 +103,11 @@ public class CallbackConnection {
     private final DispatchQueue queue;
     private final MQTT mqtt;
     private Transport transport;
-    private Listener listener = DEFAULT_LISTENER;
+    private ExtendedListener listener = DEFAULT_LISTENER;
     private Runnable refiller;
     private Map<Short, Request> requests = new ConcurrentHashMap<Short, Request>();
     private LinkedList<Request> overflow = new LinkedList<Request>();
-    private final HashSet<Short> processed = new HashSet<Short>();
+    private final HashMap<Short, Callback<Void>> processed = new HashMap<Short, Callback<Void>>();
     private Throwable failure;
     private boolean disconnected = false;
     private HeartBeatMonitor heartBeatMonitor;
@@ -509,8 +510,35 @@ public class CallbackConnection {
         return this;
     }
 
-    public CallbackConnection listener(Listener listener) {
-        this.listener = listener;
+    public CallbackConnection listener(final Listener original) {
+        if( original instanceof ExtendedListener ) {
+            this.listener = (ExtendedListener) original;
+        } else {
+            this.listener = new ExtendedListener() {
+                public void onPublish(UTF8Buffer topic, Buffer body, final Callback<Callback<Void>> ack) {
+                    original.onPublish(topic, body, new Runnable() {
+                        public void run() {
+                            ack.onSuccess(null);
+                        }
+                    });
+                }
+                public void onPublish(UTF8Buffer topic, Buffer body, Runnable ack) {
+                    original.onPublish(topic, body, ack);
+                }
+
+                public void onConnected() {
+                    original.onConnected();
+                }
+
+                public void onDisconnected() {
+                    original.onDisconnected();
+                }
+
+                public void onFailure(Throwable value) {
+                    original.onFailure(value);
+                }
+            };
+        }
         return this;
     }
 
@@ -780,10 +808,13 @@ public class CallbackConnection {
                 }
                 case PUBREL.TYPE:{
                     PUBREL ack = new PUBREL().decode(frame);
-                    processed.remove(ack.messageId());
+                    Callback<Void> onRel = processed.remove(ack.messageId());
                     PUBCOMP response = new PUBCOMP();
                     response.messageId(ack.messageId());
                     send(new Request(0, response.encode(), null));
+                    if( onRel!=null ) {
+                        onRel.onSuccess(null);
+                    }
                     break;
                 }
                 case PUBACK.TYPE:{
@@ -830,29 +861,36 @@ public class CallbackConnection {
     private void toReceiver(final PUBLISH publish) {
         if( listener !=null ) {
             try {
-                Runnable cb = NOOP;
+                Callback<Callback<Void>> cb = null;
                 switch( publish.qos() ) {
                     case AT_LEAST_ONCE:
-                        cb = new Runnable() {
-                            public void run() {
+                        cb = new Callback<Callback<Void>>() {
+                            public void onSuccess(Callback<Void> value) {
                                 PUBACK response = new PUBACK();
                                 response.messageId(publish.messageId());
                                 send(new Request(0, response.encode(), null));
+                                if( value !=null ) {
+                                    value.onSuccess(null);
+                                }
+                            }
+                            public void onFailure(Throwable value) {
                             }
                         };
                         break;
                     case EXACTLY_ONCE:
-                        cb = new Runnable() {
-                            public void run() {
+                        cb = new Callback<Callback<Void>>() {
+                            public void onSuccess(Callback<Void> value) {
                                 PUBREC response = new PUBREC();
                                 response.messageId(publish.messageId());
-                                processed.add(publish.messageId());
+                                processed.put(publish.messageId(), value);
                                 send(new Request(0, response.encode(), null));
                             }
+
+                            public void onFailure(Throwable value) {
+                            }
                         };
-                        // It might be a dup.
-                        if( processed.contains(publish.messageId()) ) {
-                            cb.run();
+                        // Looks like a dup delivery.. filter it out.
+                        if( processed.get(publish.messageId())!=null ) {
                             return;
                         }
                         break;
