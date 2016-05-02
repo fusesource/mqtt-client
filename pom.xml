@@ -98,13 +98,18 @@
   </scm>
 
   <distributionManagement>
-    <site>
-      <id>website.fusesource.org</id>
-      <name>website</name>
-      <url>dav:http://fusesource.com/forge/dav/${forge-project-id}/maven/${project.version}</url>
-    </site>
+    <repository>
+        <id>sonatype-nexus-staging</id>
+        <name>Sonatype Staging Repository</name>
+        <url> https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+    </repository>
+    <snapshotRepository>
+        <id>sonatype-nexus-snapshots</id>
+        <name>Sonatype Snapshot Repository</name>
+        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
   </distributionManagement>
-
+  
   <developers>
     <developer>
       <id>chirino</id>
