@@ -26,6 +26,7 @@ import org.fusesource.hawtdispatch.Task;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.fusesource.hawtbuf.Buffer.utf8;
 
@@ -45,6 +46,10 @@ public class FutureConnection {
 
     volatile boolean connected;
 
+    private long receiveBuffer = 1024*1024;
+    private long receiveBufferRemaining = receiveBuffer;
+    private boolean receiveBufferFull = false;
+
     public FutureConnection(CallbackConnection next) {
         this.next = next;
         this.next.listener(new ExtendedListener() {
@@ -58,9 +63,33 @@ public class FutureConnection {
             }
 
 
-            public void onPublish(UTF8Buffer topic, Buffer payload, Callback<Callback<Void>> onComplete) {
+            public void onPublish(UTF8Buffer topic, final Buffer payload, final Callback<Callback<Void>> onComplete) {
                 getDispatchQueue().assertExecuting();
-                deliverMessage(new Message(getDispatchQueue(), topic, payload, onComplete));
+                receiveBufferRemaining -= payload.length();
+                if( !receiveBufferFull && receiveBufferRemaining <=0 ) {
+                    receiveBufferFull = true;
+                    suspend();
+                }
+                deliverMessage(new Message(getDispatchQueue(), topic, payload, new Callback<Callback<Void>>() {
+                    public void onSuccess(Callback<Void> value) {
+                        processed();
+                        onComplete.onSuccess(value);
+                    }
+                    public void onFailure(Throwable value) {
+                        processed();
+                        onComplete.onFailure(value);
+                    }
+
+                    private void processed() {
+                        getDispatchQueue().assertExecuting();
+                        receiveBufferRemaining += payload.length();
+                        if( receiveBufferFull && receiveBufferRemaining >0 ) {
+                            receiveBufferFull = false;
+                            resume();
+                        }
+                    }
+
+                }));
             }
 
             public void onPublish(UTF8Buffer topic, Buffer payload, final Runnable onComplete) {
@@ -198,6 +227,27 @@ public class FutureConnection {
             }
         });
         return future;
+    }
+
+    public long getReceiveBuffer() {
+        getDispatchQueue().assertExecuting();
+        return receiveBuffer;
+    }
+
+    public void setReceiveBuffer(long receiveBuffer) {
+        getDispatchQueue().assertExecuting();
+        long prev = this.receiveBuffer;
+        this.receiveBuffer = receiveBuffer;
+        long diff = prev-receiveBuffer;
+
+        receiveBufferRemaining -= diff;
+        if( !receiveBufferFull && receiveBufferRemaining <=0 ) {
+            receiveBufferFull = true;
+            suspend();
+        } else if( receiveBufferFull && receiveBufferRemaining >0 ) {
+            receiveBufferFull = false;
+            resume();
+        }
     }
 
     public void resume() {

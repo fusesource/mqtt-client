@@ -43,6 +43,7 @@ public class BlockingApiBenchmark {
 
         final BlockingConnection subscribeConnection = mqtt.blockingConnection();
         subscribeConnection.connect();
+        subscribeConnection.setReceiveBuffer(1024*64);
 
         Topic[] topic = {new Topic(utf8("foo"), QoS.EXACTLY_ONCE)};
         byte[] qoses = subscribeConnection.subscribe(topic);

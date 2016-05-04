@@ -22,8 +22,11 @@ import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.hawtdispatch.Task;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.fusesource.hawtbuf.Buffer.utf8;
 
@@ -109,6 +112,38 @@ public class BlockingConnection {
             });
             return null;
         }
+    }
+
+    public void setReceiveBuffer(final long receiveBuffer) throws InterruptedException {
+        final CountDownLatch done = new CountDownLatch(1);
+        next.getDispatchQueue().execute(new Runnable() {
+            public void run() {
+                try {
+                    next.setReceiveBuffer(receiveBuffer);
+                } finally {
+                    done.countDown();
+                }
+
+            }
+        });
+        done.await();
+    }
+
+    public long getReceiveBuffer() throws InterruptedException {
+        final CountDownLatch done = new CountDownLatch(1);
+        final AtomicLong result = new AtomicLong();
+        next.getDispatchQueue().execute(new Runnable() {
+            public void run() {
+                try {
+                    result.set(next.getReceiveBuffer());
+                } finally {
+                    done.countDown();
+                }
+
+            }
+        });
+        done.await();
+        return result.get();
     }
 
     public void resume() {

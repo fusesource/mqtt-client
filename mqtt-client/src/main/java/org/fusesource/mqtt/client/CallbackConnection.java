@@ -895,6 +895,16 @@ public class CallbackConnection {
                         }
                         break;
                     case AT_MOST_ONCE:
+                        cb = new Callback<Callback<Void>>() {
+                            public void onSuccess(Callback<Void> value) {
+                                if (value != null) {
+                                    value.onSuccess(null);
+                                }
+                            }
+
+                            public void onFailure(Throwable value) {
+                            }
+                        };
                 }
                 listener.onPublish(publish.topicName(), publish.payload(), cb);
             } catch (Throwable e) {
