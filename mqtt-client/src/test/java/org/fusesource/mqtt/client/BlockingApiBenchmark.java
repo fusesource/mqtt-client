@@ -38,46 +38,69 @@ public class BlockingApiBenchmark {
         mqtt.setReconnectAttemptsMax(0);
         mqtt.setHost("localhost", 1883);
 
-        BlockingConnection publishConnection = mqtt.blockingConnection();
+        final BlockingConnection publishConnection = mqtt.blockingConnection();
         publishConnection.connect();
 
-        BlockingConnection subscribeConnection = mqtt.blockingConnection();
+        final BlockingConnection subscribeConnection = mqtt.blockingConnection();
         subscribeConnection.connect();
 
         Topic[] topic = {new Topic(utf8("foo"), QoS.EXACTLY_ONCE)};
         byte[] qoses = subscribeConnection.subscribe(topic);
 
-        long start = System.currentTimeMillis();
-        final AtomicLong iterations = new AtomicLong();
+        final long start = System.currentTimeMillis();
+        final AtomicLong sendCounter = new AtomicLong();
+        final AtomicLong receiveCounter = new AtomicLong();
 
-        Thread monitor = new Thread("monitor") {
+        Thread receiver = new Thread("receiver") {
             @Override
             public void run() {
                 try {
                     while (true) {
-                        Thread.sleep(1000);
-                        System.out.println("Sent/Received " + iterations.get() + " messages");
+                        if (System.currentTimeMillis() > start + TimeUnit.SECONDS.toMillis(120)) {
+                            break;
+                        }
+                        Thread.sleep(10);
+                        subscribeConnection.receive().ack();
+                        receiveCounter.incrementAndGet();
                     }
-                } catch (InterruptedException e) {
+
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         };
-        monitor.start();
+        receiver.start();
+
+        Thread sender = new Thread("sender"){
+            @Override
+            public void run() {
+                try {
+                    while (true) {
+                        if (System.currentTimeMillis() > start + TimeUnit.SECONDS.toMillis(120)) {
+                            break;
+                        }
+                        publishConnection.publish("foo", new byte[1024], QoS.EXACTLY_ONCE, false);
+                        sendCounter.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        sender.start();
 
         while (true) {
             if (System.currentTimeMillis() > start + TimeUnit.SECONDS.toMillis(120)) {
                 break;
             }
-            publishConnection.publish("foo", new byte[1024], QoS.EXACTLY_ONCE, false);
-            Message message = subscribeConnection.receive();
-            message.ack();
-            iterations.incrementAndGet();
+            Thread.sleep(1000);
+            System.out.println("Sent: "+sendCounter.get()+", Received: " + receiveCounter.get());
         }
 
-        monitor.interrupt();
         publishConnection.disconnect();
         subscribeConnection.disconnect();
-        monitor.join();
+        receiver.join();
+        sender.join();
 
     }
 }
