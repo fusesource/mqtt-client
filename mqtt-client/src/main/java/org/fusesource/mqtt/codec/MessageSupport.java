@@ -76,7 +76,7 @@ public final class MessageSupport {
 
     static abstract public class AckBase {
 
-        short messageId;
+        private short messageId;
 
         abstract byte messageType();
 

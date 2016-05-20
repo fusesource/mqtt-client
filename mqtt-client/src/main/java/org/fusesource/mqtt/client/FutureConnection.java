@@ -44,7 +44,7 @@ public class FutureConnection {
     private final LinkedList<Promise<Message>> receiveFutures = new LinkedList<Promise<Message>>();
     private final LinkedList<Message> receivedFrames = new LinkedList<Message>();
 
-    volatile boolean connected;
+    private volatile boolean connected;
 
     private long receiveBuffer = 1024*1024;
     private long receiveBufferRemaining = receiveBuffer;
