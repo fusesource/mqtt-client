@@ -459,7 +459,9 @@ public class CallbackConnection {
                                         // if the connection remained suspend we will never get the ping response..
                                         // Looks like the user has forgoton to resume the connection
                                         if (suspends == suspendChanges.get() && suspendCount.get() > 0) {
-                                            handleFatalFailure(new IllegalStateException("The connection has remained suspended for an extended period of time so it cannot do proper keep alive processing.  Did you forget to resume the connection?"));
+                                            // Since the connection has been suspended, we can't really
+                                            // check to see if we are getting the ping responses.
+                                            mqtt.tracer.debug("The connection has remained suspended for an extended period of time so it cannot do proper keep alive processing.  Did you forget to resume the connection?");
                                         } else {
                                             mqtt.tracer.debug("Ping timeout");
                                             handleSessionFailure(new ProtocolException("Ping timeout").fillInStackTrace());
