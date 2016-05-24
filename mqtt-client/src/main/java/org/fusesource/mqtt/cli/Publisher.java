@@ -263,7 +263,7 @@ public class Publisher {
         });
 
         new Task() {
-            long sent = 0;
+            private long sent = 0;
             public void run() {
                 final Task publish = this;
                 Buffer message  = body;

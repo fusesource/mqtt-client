@@ -31,9 +31,9 @@ import java.util.concurrent.TimeoutException;
 public class Promise<T> implements Callback<T>, Future<T> {
 
     private final CountDownLatch latch = new CountDownLatch(1);
-    Callback<T> next;
-    Throwable error;
-    T value;
+    private Callback<T> next;
+    private Throwable error;
+    private T value;
 
     public void onFailure(Throwable value) {
         Callback<T> callback = null;
