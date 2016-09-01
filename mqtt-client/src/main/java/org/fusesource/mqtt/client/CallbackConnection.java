@@ -215,6 +215,15 @@ public class CallbackConnection {
             }
 
         } else {
+
+            if(transport!=null) {
+                transport.stop(new Task() {
+                    @Override
+                    public void run() {
+                        listener.onDisconnected();
+                    }
+                });
+            } 
             // nope.
             handleFatalFailure(error);
         }
