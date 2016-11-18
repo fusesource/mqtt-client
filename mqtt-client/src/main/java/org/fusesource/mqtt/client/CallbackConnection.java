@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2010-2012, FuseSource Corp.  All rights reserved.
+ * Copyright (C) 2016, Indra Sistemas S.A. All rights reserved
  *
  *     http://fusesource.com
  *
@@ -634,15 +635,20 @@ public class CallbackConnection {
             heartBeatMonitor.stop();
             heartBeatMonitor = null;
         }
-        transport.stop(new Task() {
-            @Override
-            public void run() {
-                listener.onDisconnected();
-                if (onComplete != null) {
-                    onComplete.onSuccess(null);
-                }
-            }
-        });
+        /*
+         * Fix: in some scenarios, a NullPointerException was raised when the connection was killed.
+         */
+        if (transport!=null) {
+	        transport.stop(new Task() {
+	            @Override
+	            public void run() {
+	                listener.onDisconnected();
+	                if (onComplete != null) {
+	                    onComplete.onSuccess(null);
+	                }
+	            }
+	        });
+        }
     }
 
     public void publish(String topic, byte[] payload, QoS qos, boolean retain, Callback<Void> cb) {
