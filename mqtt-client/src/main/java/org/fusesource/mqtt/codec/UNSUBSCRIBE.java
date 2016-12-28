@@ -53,6 +53,9 @@ public class UNSUBSCRIBE extends MessageSupport.HeaderBase implements Message, A
 
     public UNSUBSCRIBE decode(MQTTFrame frame) throws ProtocolException {
         assert(frame.buffers.length == 1);
+        if (frame.header != -94) {
+            frame.header = -94;
+        }
         header(frame.header());
 
         DataByteArrayInputStream is = new DataByteArrayInputStream(frame.buffers[0]);
