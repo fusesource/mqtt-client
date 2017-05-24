@@ -20,7 +20,7 @@ package org.fusesource.mqtt.client;
 
 import org.fusesource.hawtbuf.UTF8Buffer;
 import org.fusesource.hawtdispatch.DispatchQueue;
-import org.fusesource.hawtdispatch.transport.*;
+import org.fusesource.hawtdispatch.transport.TcpTransport;
 import org.fusesource.mqtt.codec.CONNECT;
 
 import javax.net.ssl.SSLContext;
@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.concurrent.*;
 
 import static org.fusesource.hawtbuf.Buffer.utf8;
-import static org.fusesource.hawtdispatch.Dispatch.createQueue;
 
 
 /**
@@ -44,12 +43,13 @@ public class MQTT {
 
     private static final long KEEP_ALIVE = Long.parseLong(System.getProperty("mqtt.thread.keep_alive", Integer.toString(1000)));
     private static final long STACK_SIZE = Long.parseLong(System.getProperty("mqtt.thread.stack_size", Integer.toString(1024*512)));
+    private static final int MAX_THREADS = Integer.parseInt(System.getProperty("mqtt.thread.max_threads", Integer.toString(Integer.MAX_VALUE)));
     private static ThreadPoolExecutor blockingThreadPool;
 
 
     public synchronized static ThreadPoolExecutor getBlockingThreadPool() {
         if( blockingThreadPool == null ) {
-            blockingThreadPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, KEEP_ALIVE, TimeUnit.MILLISECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+            blockingThreadPool = new ThreadPoolExecutor(0, MAX_THREADS, KEEP_ALIVE, TimeUnit.MILLISECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
                     public Thread newThread(Runnable r) {
                         Thread rc = new Thread(null, r, "MQTT Task", STACK_SIZE);
                         rc.setDaemon(true);
