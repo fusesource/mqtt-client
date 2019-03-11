@@ -30,7 +30,7 @@
 
   <groupId>org.fusesource.mqtt-client</groupId>
   <artifactId>mqtt-client-project</artifactId>
-  <version>1.15</version>
+  <version>1.16-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>${project.artifactId}</name>
@@ -94,7 +94,7 @@
     <connection>scm:git:git://forge.fusesource.com/${forge-project-id}.git</connection>
     <developerConnection>scm:git:ssh://git@forge.fusesource.com/${forge-project-id}.git</developerConnection>
     <url>http://github.com/fusesource/mqtt-client/tree/master</url>
-    <tag>mqtt-client-project-1.15</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
