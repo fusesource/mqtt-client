@@ -37,6 +37,8 @@ public class SUBACK implements Message {
     public static final byte[] NO_GRANTED_QOS = new byte[0];
     public static final byte TYPE = 9;
 
+    private static final byte FAILURE_QOS = (byte)0x80;
+
     private short messageId;
     private byte[] grantedQos = NO_GRANTED_QOS;
 
@@ -68,6 +70,10 @@ public class SUBACK implements Message {
 
     public byte[] grantedQos() {
         return grantedQos;
+    }
+
+    public static boolean isFailureQos(byte grantedQos) {
+        return grantedQos == FAILURE_QOS;
     }
 
     public SUBACK grantedQos(byte[] grantedQos) {
