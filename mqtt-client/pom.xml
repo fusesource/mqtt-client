@@ -21,27 +21,27 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  
+
   <parent>
     <groupId>org.fusesource.mqtt-client</groupId>
     <artifactId>mqtt-client-project</artifactId>
     <version>1.16-SNAPSHOT</version>
   </parent>
-  
+
   <groupId>org.fusesource.mqtt-client</groupId>
   <artifactId>mqtt-client</artifactId>
   <version>1.16-SNAPSHOT</version>
   <packaging>bundle</packaging>
-  
+
   <name>${project.artifactId}</name>
   <description>
-     mqtt-client provides an ASL 2.0 licensed API to MQTT. It takes care of 
-     automatically reconnecting to your MQTT server and restoring your client 
-     session if any network failures occur. Applications can use a blocking 
-     API style, a futures based API, or a callback/continuations passing API 
+     mqtt-client provides an ASL 2.0 licensed API to MQTT. It takes care of
+     automatically reconnecting to your MQTT server and restoring your client
+     session if any network failures occur. Applications can use a blocking
+     API style, a futures based API, or a callback/continuations passing API
      style.
   </description>
-  
+
   <dependencies>
 
     <dependency>
@@ -75,7 +75,7 @@
       <version>${asm-version}</version>
       <optional>true</optional>
     </dependency>
-    
+
     <!-- Testing Dependencies -->
     <dependency>
       <groupId>org.apache.activemq</groupId>
@@ -122,26 +122,26 @@
       <scope>test</scope>
     </dependency>
 
-    
+
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-        
+
         <groupId>com.github.wvengen</groupId>
         <artifactId>proguard-maven-plugin</artifactId>
-        <version>2.0.5</version>
- 
+        <version>2.0.14</version>
+
         <dependencies>
            <dependency>
                <groupId>net.sf.proguard</groupId>
                <artifactId>proguard-base</artifactId>
-               <version>4.8</version>
+               <version>6.0.3</version>
                <scope>runtime</scope>
            </dependency>
         </dependencies>
- 
+
         <executions>
            <execution>
              <phase>package</phase>
@@ -151,9 +151,9 @@
            </execution>
         </executions>
         <configuration>
-          <proguardVersion>4.8</proguardVersion>
+          <proguardVersion>6.0.3</proguardVersion>
           <injar>${project.build.finalName}.jar</injar>
-          <outjar>${project.build.finalName}-uber.jar</outjar>          
+          <outjar>${project.build.finalName}-uber.jar</outjar>
           <attach>true</attach>
           <attachArtifactClassifier>uber</attachArtifactClassifier>
           <libs>
@@ -186,5 +186,5 @@
 
     </plugins>
   </build>
-  
+
 </project>
