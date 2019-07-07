@@ -38,12 +38,12 @@ public class PUBREL extends MessageSupport.HeaderBase implements Message, Acked 
 
     private short messageId;
 
-    public byte messageType() {
-        return TYPE;
-    }
-    
     public PUBREL() {
         qos(QoS.AT_LEAST_ONCE);
+    }
+
+    public byte messageType() {
+        return TYPE;
     }
 
     public PUBREL decode(MQTTFrame frame) throws ProtocolException {

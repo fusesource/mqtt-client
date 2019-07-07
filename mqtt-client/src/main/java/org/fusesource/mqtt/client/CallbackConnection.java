@@ -71,7 +71,10 @@ import static org.fusesource.hawtdispatch.Dispatch.createQueue;
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 public class CallbackConnection {
-    
+    private boolean onRefillCalled =false;
+    public static final Task NOOP = Dispatch.NOOP;
+    private short nextMessageId = 1;
+
     private static class Request {
         private final MQTTFrame frame;
         private final short id;
@@ -411,7 +414,6 @@ public class CallbackConnection {
         }
     }
 
-    private boolean onRefillCalled =false;
     public void onSessionEstablished(Transport transport) {
         this.transport = transport;
         if( suspendCount.get() > 0 ) {
@@ -741,7 +743,6 @@ public class CallbackConnection {
         }
     }
 
-    private short nextMessageId = 1;
     private short getNextMessageId() {
         short rc = nextMessageId;
         nextMessageId++;
@@ -857,8 +858,6 @@ public class CallbackConnection {
             handleFatalFailure(e);
         }
     }
-
-    static public final Task NOOP = Dispatch.NOOP;
 
     private void toReceiver(final PUBLISH publish) {
         if( listener !=null ) {

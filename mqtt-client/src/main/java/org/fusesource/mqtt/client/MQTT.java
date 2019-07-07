@@ -45,44 +45,7 @@ public class MQTT {
     private static final long KEEP_ALIVE = Long.parseLong(System.getProperty("mqtt.thread.keep_alive", Integer.toString(1000)));
     private static final long STACK_SIZE = Long.parseLong(System.getProperty("mqtt.thread.stack_size", Integer.toString(1024*512)));
     private static ThreadPoolExecutor blockingThreadPool;
-
-
-    public synchronized static ThreadPoolExecutor getBlockingThreadPool() {
-        if( blockingThreadPool == null ) {
-            blockingThreadPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, KEEP_ALIVE, TimeUnit.MILLISECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
-                    public Thread newThread(Runnable r) {
-                        Thread rc = new Thread(null, r, "MQTT Task", STACK_SIZE);
-                        rc.setDaemon(true);
-                        return rc;
-                    }
-                }) {
-
-                    @Override
-                    public void shutdown() {
-                        // we don't ever shutdown since we are shared..
-                    }
-
-                    @Override
-                    public List<Runnable> shutdownNow() {
-                        // we don't ever shutdown since we are shared..
-                        return Collections.emptyList();
-                    }
-                };
-        }
-        return blockingThreadPool;
-    }
-    public synchronized static void setBlockingThreadPool(ThreadPoolExecutor pool) {
-        blockingThreadPool = pool;
-    }
-    
     private static final URI DEFAULT_HOST = createDefaultHost();
-    private static URI createDefaultHost() {
-        try {
-            return new URI("tcp://127.0.0.1:1883");
-        } catch (URISyntaxException e) {
-            return null;
-        }
-    }
 
     protected URI host = DEFAULT_HOST;
     protected URI localAddress;
@@ -125,6 +88,42 @@ public class MQTT {
         this.reconnectAttemptsMax = other.reconnectAttemptsMax;
         this.connectAttemptsMax = other.connectAttemptsMax;
         this.tracer = other.tracer;
+    }
+
+    public synchronized static ThreadPoolExecutor getBlockingThreadPool() {
+        if( blockingThreadPool == null ) {
+            blockingThreadPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, KEEP_ALIVE, TimeUnit.MILLISECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+                    public Thread newThread(Runnable r) {
+                        Thread rc = new Thread(null, r, "MQTT Task", STACK_SIZE);
+                        rc.setDaemon(true);
+                        return rc;
+                    }
+                }) {
+
+                    @Override
+                    public void shutdown() {
+                        // we don't ever shutdown since we are shared..
+                    }
+
+                    @Override
+                    public List<Runnable> shutdownNow() {
+                        // we don't ever shutdown since we are shared..
+                        return Collections.emptyList();
+                    }
+                };
+        }
+        return blockingThreadPool;
+    }
+    public synchronized static void setBlockingThreadPool(ThreadPoolExecutor pool) {
+        blockingThreadPool = pool;
+    }
+
+    private static URI createDefaultHost() {
+        try {
+            return new URI("tcp://127.0.0.1:1883");
+        } catch (URISyntaxException e) {
+            return null;
+        }
     }
 
     public CallbackConnection callbackConnection() {
