@@ -165,7 +165,6 @@ public class CallbackConnection {
         }
 
         final long reconnectDelay = calculateDelay();
-
         try {
             Thread.sleep(reconnectDelay);
         } catch (final InterruptedException e1) {
