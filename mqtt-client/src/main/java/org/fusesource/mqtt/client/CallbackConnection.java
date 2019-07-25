@@ -160,11 +160,11 @@ public class CallbackConnection {
     }
 
     void reconnect() {
-        if( isReconnecting.get() ) {
+        if( isReconnecting.getAndSet(true) ) {
             return;
         }
 
-       final long reconnectDelay = calculateDelay();
+        final long reconnectDelay = calculateDelay();
 
         try {
             Thread.sleep(reconnectDelay);
@@ -172,10 +172,6 @@ public class CallbackConnection {
             // ignore it
         }
 
-        if( isReconnecting.get() ) {
-            return;
-        }
-        isReconnecting.set(true);
         try {
             // And reconnect.
             createTransport(new LoginHandler(new Callback<Void>() {
