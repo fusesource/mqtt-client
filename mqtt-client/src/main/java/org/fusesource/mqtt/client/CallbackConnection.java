@@ -57,6 +57,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.fusesource.hawtbuf.Buffer.utf8;
@@ -113,7 +114,7 @@ public class CallbackConnection {
     private HeartBeatMonitor heartBeatMonitor;
     private long pingedAt;
     private long reconnects = 0;
-    private boolean isReconnecting = false;
+    private AtomicBoolean isReconnecting = new AtomicBoolean(false);
     private final AtomicInteger suspendCount = new AtomicInteger(0);
     private final AtomicInteger suspendChanges = new AtomicInteger(0);
 
@@ -146,11 +147,8 @@ public class CallbackConnection {
         }
     }
 
-    void reconnect() {
-        if( isReconnecting ) {
-            return;
-        }
-
+    private long calculateDelay()
+    {
         long reconnectDelay = mqtt.reconnectDelay;
         if( reconnectDelay > 0 && mqtt.reconnectBackOffMultiplier > 1.0 ) {
             reconnectDelay = (long)Math.pow(mqtt.reconnectDelay * reconnects, mqtt.reconnectBackOffMultiplier);
@@ -158,6 +156,15 @@ public class CallbackConnection {
 
         reconnectDelay = Math.min(reconnectDelay, mqtt.reconnectDelayMax);
         reconnects += 1;
+        return reconnectDelay;
+    }
+
+    void reconnect() {
+        if( isReconnecting.get() ) {
+            return;
+        }
+
+       final long reconnectDelay = calculateDelay();
 
         try {
             Thread.sleep(reconnectDelay);
@@ -165,10 +172,10 @@ public class CallbackConnection {
             // ignore it
         }
 
-        if( isReconnecting ) {
+        if( isReconnecting.get() ) {
             return;
         }
-        isReconnecting = true;
+        isReconnecting.set(true);
         try {
             // And reconnect.
             createTransport(new LoginHandler(new Callback<Void>() {
@@ -204,16 +211,16 @@ public class CallbackConnection {
                     }
 
                     reconnects = 0;
-                    isReconnecting = false;
+                    isReconnecting.set(false);
                 }
 
                 public void onFailure(Throwable value) {
-                    isReconnecting = false;
+                    isReconnecting.set(false);
                     handleFatalFailure(value);
                 }
             }, false));
         } catch (Throwable e) {
-            isReconnecting = false;
+            isReconnecting.set(false);
             handleFatalFailure(e);
         }
     }
@@ -249,13 +256,7 @@ public class CallbackConnection {
     }
 
     void reconnect(final Callback<Transport> onConnect) {
-        long reconnectDelay = mqtt.reconnectDelay;
-        if( reconnectDelay> 0 && mqtt.reconnectBackOffMultiplier > 1.0 ) {
-            reconnectDelay = (long) Math.pow(mqtt.reconnectDelay*reconnects, mqtt.reconnectBackOffMultiplier);
-        }
-        reconnectDelay = Math.min(reconnectDelay, mqtt.reconnectDelayMax);
-        reconnects += 1;
-        queue.executeAfter(reconnectDelay, TimeUnit.MILLISECONDS, new Task() {
+        queue.executeAfter(calculateDelay(), TimeUnit.MILLISECONDS, new Task() {
             @Override
             public void run() {
                 if(disconnected) {
