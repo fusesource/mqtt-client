@@ -57,6 +57,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.fusesource.hawtbuf.Buffer.utf8;
@@ -71,7 +72,7 @@ import static org.fusesource.hawtdispatch.Dispatch.createQueue;
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 public class CallbackConnection {
-    
+
     private static class Request {
         private final MQTTFrame frame;
         private final short id;
@@ -113,11 +114,13 @@ public class CallbackConnection {
     private HeartBeatMonitor heartBeatMonitor;
     private long pingedAt;
     private long reconnects = 0;
+    private AtomicBoolean isReconnecting = new AtomicBoolean(false);
     private final AtomicInteger suspendCount = new AtomicInteger(0);
     private final AtomicInteger suspendChanges = new AtomicInteger(0);
 
     private final HashMap<UTF8Buffer, QoS> activeSubs = new HashMap<UTF8Buffer, QoS>();
 
+    private final Object nextMessageIdLock = new Object();
 
     public CallbackConnection(MQTT mqtt) {
         this.mqtt = mqtt;
@@ -144,7 +147,30 @@ public class CallbackConnection {
         }
     }
 
+    private long calculateDelay()
+    {
+        long reconnectDelay = mqtt.reconnectDelay;
+        if( reconnectDelay > 0 && mqtt.reconnectBackOffMultiplier > 1.0 ) {
+            reconnectDelay = (long)Math.pow(mqtt.reconnectDelay * reconnects, mqtt.reconnectBackOffMultiplier);
+        }
+
+        reconnectDelay = Math.min(reconnectDelay, mqtt.reconnectDelayMax);
+        reconnects += 1;
+        return reconnectDelay;
+    }
+
     void reconnect() {
+        if( isReconnecting.getAndSet(true) ) {
+            return;
+        }
+
+        final long reconnectDelay = calculateDelay();
+        try {
+            Thread.sleep(reconnectDelay);
+        } catch (final InterruptedException e1) {
+            // ignore it
+        }
+
         try {
             // And reconnect.
             createTransport(new LoginHandler(new Callback<Void>() {
@@ -169,7 +195,7 @@ public class CallbackConnection {
                     // Replay any un-acked requests..
                     for (Map.Entry<Short, Request> entry : originalRequests.entrySet()) {
                         MQTTFrame frame = entry.getValue().frame;
-                        frame.dup(true); // set the dup flag as these frames were previously transmitted.
+                        frame.dup(frame.messageType() == PUBLISH.TYPE); // set the dup flag as these frames were previously transmitted.
                         send(entry.getValue());
                     }
 
@@ -179,13 +205,17 @@ public class CallbackConnection {
                         send(request);
                     }
 
+                    reconnects = 0;
+                    isReconnecting.set(false);
                 }
 
                 public void onFailure(Throwable value) {
+                    isReconnecting.set(false);
                     handleFatalFailure(value);
                 }
             }, false));
         } catch (Throwable e) {
+            isReconnecting.set(false);
             handleFatalFailure(e);
         }
     }
@@ -221,13 +251,7 @@ public class CallbackConnection {
     }
 
     void reconnect(final Callback<Transport> onConnect) {
-        long reconnectDelay = mqtt.reconnectDelay;
-        if( reconnectDelay> 0 && mqtt.reconnectBackOffMultiplier > 1.0 ) {
-            reconnectDelay = (long) Math.pow(mqtt.reconnectDelay*reconnects, mqtt.reconnectBackOffMultiplier);
-        }
-        reconnectDelay = Math.min(reconnectDelay, mqtt.reconnectDelayMax);
-        reconnects += 1;
-        queue.executeAfter(reconnectDelay, TimeUnit.MILLISECONDS, new Task() {
+        queue.executeAfter(calculateDelay(), TimeUnit.MILLISECONDS, new Task() {
             @Override
             public void run() {
                 if(disconnected) {
@@ -391,12 +415,12 @@ public class CallbackConnection {
             mqtt.tracer.debug("Logging in");
             assert accepted: "First frame should always be accepted by the transport";
         }
-        
+
         private boolean tryReconnect() {
             if(initialConnect) {
                 return mqtt.connectAttemptsMax<0 || reconnects < mqtt.connectAttemptsMax;
             }
-            
+
             return mqtt.reconnectAttemptsMax<0 || reconnects < mqtt.reconnectAttemptsMax;
         }
 
@@ -447,7 +471,7 @@ public class CallbackConnection {
                     // Don't care if the offer is rejected, just means we have data outbound.
                     if(!disconnected && pingedAt==0) {
                         MQTTFrame encoded = new PINGREQ().encode();
-                        if(CallbackConnection.this.transport.offer(encoded)) {
+                        if(CallbackConnection.this.transport != null && CallbackConnection.this.transport.offer(encoded)) {
                             mqtt.tracer.onSend(encoded);
                             final long now = System.currentTimeMillis();
                             final long suspends = suspendChanges.get();
@@ -471,7 +495,7 @@ public class CallbackConnection {
                             });
                         }
                     }
-                    
+
                 }
             });
             heartBeatMonitor.start();
@@ -575,19 +599,21 @@ public class CallbackConnection {
                         heartBeatMonitor.stop();
                         heartBeatMonitor = null;
                     }
-                    transport.stop(new Task() {
-                        @Override
-                        public void run() {
-                            listener.onDisconnected();
-                            if (onComplete != null) {
-                                onComplete.onSuccess(null);
+                    if(transport != null) {
+                        transport.stop(new Task() {
+                            @Override
+                            public void run() {
+                                listener.onDisconnected();
+                                if (onComplete != null) {
+                                    onComplete.onSuccess(null);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         };
-        
+
         Callback<Void> cb = new Callback<Void>() {
             public void onSuccess(Void v) {
                 // To make sure DISCONNECT has been flushed out to the socket
@@ -607,7 +633,7 @@ public class CallbackConnection {
                 stop.run();
             }
         };
-        
+
         // Pop the frame into a request so it we get notified
         // of any failures so we continue to stop the transport.
         if(transport!=null) {
@@ -720,7 +746,7 @@ public class CallbackConnection {
                 request.cb.onFailure(failure);
             }
         } else {
-            // Put the request in the map before sending it over the wire. 
+            // Put the request in the map before sending it over the wire.
             if(request.id!=0) {
                 this.requests.put(request.id, request);
             }
@@ -731,7 +757,7 @@ public class CallbackConnection {
                     if( request.cb!=null ) {
                         ((Callback<Void>)request.cb).onSuccess(null);
                     }
-                    
+
                 }
             } else {
                 // Remove it from the request.
@@ -743,12 +769,14 @@ public class CallbackConnection {
 
     private short nextMessageId = 1;
     private short getNextMessageId() {
-        short rc = nextMessageId;
-        nextMessageId++;
-        if(nextMessageId==0) {
-            nextMessageId=1;
+        synchronized(nextMessageIdLock) {
+            short rc = nextMessageId;
+            nextMessageId++;
+            if(nextMessageId==0) {
+                nextMessageId=1;
+            }
+            return rc;
         }
-        return rc;
     }
 
     private void drainOverflow() {
@@ -918,7 +946,7 @@ public class CallbackConnection {
     private void handleFatalFailure(Throwable error) {
         if( failure == null ) {
             failure = error;
-            
+
             mqtt.tracer.debug("Fatal connection failure: %s", error);
             // Fail incomplete requests.
             ArrayList<Request> values = new ArrayList(requests.values());
@@ -936,7 +964,7 @@ public class CallbackConnection {
                     entry.cb.onFailure(failure);
                 }
             }
-            
+
             if( listener !=null && !disconnected ) {
                 try {
                     listener.onFailure(failure);
