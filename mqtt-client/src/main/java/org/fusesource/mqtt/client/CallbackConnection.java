@@ -147,8 +147,7 @@ public class CallbackConnection {
         }
     }
 
-    private long calculateDelay()
-    {
+    private long calculateDelay() {
         long reconnectDelay = mqtt.reconnectDelay;
         if( reconnectDelay > 0 && mqtt.reconnectBackOffMultiplier > 1.0 ) {
             reconnectDelay = (long)Math.pow(mqtt.reconnectDelay * reconnects, mqtt.reconnectBackOffMultiplier);
