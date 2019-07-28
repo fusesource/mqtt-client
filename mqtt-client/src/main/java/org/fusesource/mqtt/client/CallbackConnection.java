@@ -51,10 +51,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -827,6 +824,30 @@ public class CallbackConnection {
         }
     }
 
+    private void completeRequestSubAck(short id, byte[] grantedQos) throws ProtocolException {
+        Request request = requests.remove(id);
+        if( request!=null ) {
+            assert SUBSCRIBE.TYPE==request.frame.messageType();
+            if(request.cb!=null) {
+                ArrayList<String> rejectedTopics = new ArrayList<String>(grantedQos.length);
+                for (int i = 0; i < grantedQos.length; i++) {
+                    if(SUBACK.isFailureQos(grantedQos[i])) {
+                        rejectedTopics.add(new SUBSCRIBE().decode(request.frame).topics()[i].toString());
+                    }
+                }
+
+                if(!rejectedTopics.isEmpty()) {
+                    ((Callback<Void>)request.cb).onFailure(new ProtocolException("Server rejected subscribe to: " + Arrays.toString(rejectedTopics.toArray())));
+                }
+                if(rejectedTopics.size() < grantedQos.length) {
+                    ((Callback<Object>) request.cb).onSuccess(grantedQos);
+                }
+            }
+        } else {
+            handleFatalFailure(new ProtocolException("Command from server contained an invalid message id: " + id));
+        }
+    }
+
     private void processFrame(MQTTFrame frame) {
         try {
             switch(frame.messageType()) {
@@ -865,7 +886,7 @@ public class CallbackConnection {
                 }
                 case SUBACK.TYPE: {
                     SUBACK ack = new SUBACK().decode(frame);
-                    completeRequest(ack.messageId(), SUBSCRIBE.TYPE, ack.grantedQos());
+                    completeRequestSubAck(ack.messageId(), ack.grantedQos());
                     break;
                 }
                 case UNSUBACK.TYPE: {
