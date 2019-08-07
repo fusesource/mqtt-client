@@ -487,7 +487,6 @@ public class CallbackConnection {
                                             mqtt.tracer.debug("The connection has remained suspended for an extended period of time so it cannot do proper keep alive processing.  Did you forget to resume the connection?");
                                         } else {
                                             mqtt.tracer.debug("Ping timeout");
-                                            handleSessionFailure(new ProtocolException("Ping timeout").fillInStackTrace());
                                         }
                                     }
                                 }
