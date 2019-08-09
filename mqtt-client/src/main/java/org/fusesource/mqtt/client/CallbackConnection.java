@@ -244,6 +244,15 @@ public class CallbackConnection {
             }
 
         } else {
+
+            if(transport!=null) {
+                transport.stop(new Task() {
+                    @Override
+                    public void run() {
+                        listener.onDisconnected();
+                    }
+                });
+            } 
             // nope.
             handleFatalFailure(error);
         }
@@ -739,7 +748,7 @@ public class CallbackConnection {
         send(new Request(id, command.encode(), cb));
     }
 
-    private void send(Request request) {
+    private synchronized void send(Request request) {
         if( failure !=null ) {
             if( request.cb!=null ) {
                 request.cb.onFailure(failure);
