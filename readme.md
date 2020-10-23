@@ -232,18 +232,21 @@ callback interfaces you implement.
 Example:
 
     final CallbackConnection connection = mqtt.callbackConnection();
-    connection.listener(new Listener() {
+    connection.listener(new ExtendedListener() {
       
-        public void onDisconnected() {
-        }
-        public void onConnected() {
-        }
-
-        public void onPublish(UTF8Buffer topic, Buffer payload, Runnable ack) {
-            // You can now process a received message from a topic.
-            // Once process execute the ack runnable.
-            ack.run();
-        }
+        public void onDisconnected() {}
+        public void onConnected() {}
+        public void onPublish(UTF8Buffer topic, Buffer payload, Runnable ack) {}
+	
+	public void onPublish(UTF8Buffer utf8Buffer, Buffer buffer, Callback<Callback<Void>> callback) {
+		callback.onSuccess(new Callback<Void>() {
+		    public void onSuccess(Void aVoid) {
+			System.out.println(new String(buffer.toByteArray()));
+		    }
+		    public void onFailure(Throwable throwable) {}
+		});
+	}
+	
         public void onFailure(Throwable value) {
             connection.close(null); // a connection failure occured.
         }
