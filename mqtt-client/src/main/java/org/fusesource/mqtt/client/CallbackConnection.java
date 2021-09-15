@@ -204,7 +204,6 @@ public class CallbackConnection {
                         send(request);
                     }
 
-                    reconnects = 0;
                     isReconnecting.set(false);
                 }
 
